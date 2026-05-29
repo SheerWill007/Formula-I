@@ -1,0 +1,521 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Bebas+Neue&family=Oswald:wght@400;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* F1 Brand Colors */
+  --f1-red: #E10600;
+  --f1-black: #000000;
+  --f1-white: #FFFFFF;
+  --f1-green: #10B981;
+  --f1-gray: #38383F;
+  --f1-silver: #C0C0C0;
+
+  /* Theme Colors */
+  --red: #E10600;
+  --red-hover: #C00500;
+  --red-soft: #FEE2E7;
+  --navy: #1E293B;
+  --navy-hover: #0F172A;
+  --green: #10B981;
+  --green-soft: #D1FAE5;
+  --neutral: #64748B;
+
+  --bg: #F8FAFC;
+  --bg-deep: #F1F5F9;
+  --surface: #FFFFFF;
+  --surface-2: #F8FAFC;
+  --surface-3: #F1F5F9;
+
+  --text: #0F172A;
+  --text-2: #334155;
+  --text-3: #64748B;
+  --text-4: #94A3B8;
+
+  --border: #E2E8F0;
+  --border-2: #CBD5E1;
+
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.10), 0 4px 12px rgba(15, 23, 42, 0.05);
+  --shadow-xl: 0 24px 64px rgba(15, 23, 42, 0.12), 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: 'Inter', sans-serif;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  padding-top: 72px;
+  padding-bottom: 96px;
+  min-height: 100vh;
+}
+
+main.landing {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.layout-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+/* ── Typography ── */
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.display {
+  font-family: 'Inter', sans-serif;
+}
+
+.page-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.page-subtitle {
+  color: var(--text-3);
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 60ch;
+}
+
+.eyebrow {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+/* ── Panels ── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.panel-soft {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.panel-soft:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-2);
+  transform: translateY(-2px);
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--red);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  box-shadow: 0 4px 14px rgba(225, 6, 0, 0.28);
+}
+
+.btn-primary:hover {
+  background: var(--red-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(225, 6, 0, 0.36);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--navy);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.btn-secondary:hover {
+  background: var(--navy-hover);
+  transform: translateY(-1px);
+}
+
+.btn-outlined {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  background: transparent;
+  color: var(--navy);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.btn-outlined:hover {
+  border-color: var(--navy);
+  background: var(--bg-deep);
+  transform: translateY(-1px);
+}
+
+/* ── Animations ── */
+.fade-up {
+  animation: fadeUp 420ms ease both;
+}
+
+.fade-up-1 {
+  animation: fadeUp 500ms 60ms ease both;
+}
+
+.fade-up-2 {
+  animation: fadeUp 500ms 120ms ease both;
+}
+
+.fade-up-3 {
+  animation: fadeUp 500ms 180ms ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Tyre chips ── */
+.tyre-soft {
+  background: #E8002D;
+  color: #fff;
+}
+
+.tyre-medium {
+  background: #FFD700;
+  color: #000;
+}
+
+.tyre-hard {
+  background: #1E293B;
+  color: #fff;
+}
+
+.tyre-inter {
+  background: #10B981;
+  color: #fff;
+}
+
+.tyre-wet {
+  background: #2563EB;
+  color: #fff;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral);
+}
+
+/* ── Telemetry layouts ── */
+.telemetry-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Bottom nav ── */
+.bottom-nav-shell {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+}
+
+.bottom-nav-inner {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+}
+
+.bottom-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background 150ms ease;
+}
+
+.bottom-nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.04em;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  main {
+    padding-top: 60px;
+    padding-bottom: 96px;
+  }
+
+  main.landing {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .layout-wrapper {
+    padding: 12px 12px 32px;
+  }
+
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .telemetry-top-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Session hub: stack sidebar below the main card on mobile */
+  .session-hub-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .session-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Sessions list: on mobile the inner 4-col grid becomes 2-col */
+  .sessions-grid-row {
+    grid-template-columns: 60px 1fr 36px !important;
+    gap: 12px !important;
+  }
+
+  /* Hide the stats box on very small screens */
+  .sessions-stats-box {
+    display: none !important;
+  }
+
+  /* RaceAnalysis: stack the main+sidebar layout vertically */
+  .race-analysis-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Schedule page */
+  .schedule-container {
+    padding: 20px 16px !important;
+  }
+
+  .schedule-hero {
+    height: auto !important;
+    min-height: 380px !important;
+    border-radius: 24px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .schedule-hero-content {
+    padding: 32px 24px !important;
+  }
+
+  .schedule-hero-meta {
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-top: 16px !important;
+  }
+
+  .schedule-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .race-card {
+    padding: 24px 20px !important;
+    min-height: auto !important;
+  }
+
+  .race-card-inner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  .race-card-number {
+    font-size: 72px !important;
+    left: 8px !important;
+    top: 16px !important;
+    transform: none !important;
+    opacity: 0.2;
+  }
+
+  .race-card-content {
+    padding-left: 0 !important;
+  }
+
+  .race-card-finishers {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Dashboard */
+  .dashboard-container {
+    padding: 16px 12px 80px !important;
+  }
+
+  .dashboard-top-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-hero-content {
+    padding: 24px !important;
+  }
+
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Championship Standings */
+  .standing-row-driver {
+    grid-template-columns: 32px 48px 1fr 60px !important;
+    padding: 12px 16px !important;
+    gap: 8px !important;
+  }
+
+  .standing-row-constructor {
+    grid-template-columns: 32px 1fr 60px !important;
+    padding: 12px 16px !important;
+    gap: 8px !important;
+  }
+
+  .standing-hide-mobile {
+    display: none !important;
+  }
+
+  /* Predictions */
+  .predictions-container {
+    padding: 16px !important;
+  }
+
+  .podium-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .predictions-model-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .predictions-header,
+  .predictions-row {
+    grid-template-columns: 32px 28px 1fr !important;
+  }
+
+  .predictions-hide-mobile {
+    display: none !important;
+  }
+
+  .predictions-page-header {
+    flex-wrap: wrap !important;
+  }
+
+  .predictions-dropdown-container {
+    width: 100% !important;
+    margin-top: 8px !important;
+  }
+
+  .predictions-dropdown-button {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .predictions-dropdown-menu {
+    width: 100% !important;
+    right: auto !important;
+    left: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+
+  /* TopBar: hide desktop nav text links on tiny screens, keep logo */
+  .topbar-nav-links {
+    display: none !important;
+  }
+
+  .layout-wrapper {
+    padding: 8px 8px 24px;
+  }
+}

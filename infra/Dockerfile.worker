@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY pyproject.toml .
+COPY uv.lock .
+COPY apps/ apps/
+COPY packages/ packages/
+
+RUN pip install uv && uv sync --frozen --no-dev
+ENV PYTHONPATH=/app/packages/ingestion/src:/app/packages/ml/src:/app/packages/workers/src
+ENV PATH="/app/.venv/bin:$PATH"
+
+CMD ["celery", "-A", "workers.celery_app", "worker", "--loglevel=info"]

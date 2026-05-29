@@ -1,0 +1,11 @@
+flask>=3.0
+flask-socketio>=5.3
+sqlalchemy>=2.0
+psycopg[binary]>=3.1
+alembic>=1.13
+celery[redis]>=5.3
+redis>=5.0
+pydantic>=2.7
+pydantic-settings>=2.3
+structlog>=24.0
+flask-cors>=6.0.2
