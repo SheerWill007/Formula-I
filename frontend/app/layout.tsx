@@ -445,7 +445,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ThemeContext.Provider value={{ theme, toggle: toggleTheme }}>
       <MusicContext.Provider value={{ volume, setVolume }}>
-        <html lang="en" suppressHydrationWarning data-theme={theme}>
+        <html lang="en" suppressHydrationWarning data-theme={theme} data-scroll-behavior="smooth">
           <head>
             <title>Formula 1 - F1 Race Analytics & Telemetry</title>
             <meta
@@ -458,7 +458,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Global tube-nav & transition styles */}
             <style>{`
               *, *::before, *::after { box-sizing: border-box; }
-              html { scroll-behavior: smooth; }
+              html { }
               body {
                 margin: 0;
                 transition: background 0.35s ease, color 0.35s ease;

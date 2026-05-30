@@ -112,6 +112,7 @@ export default function SessionsPage() {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024)
@@ -120,16 +121,33 @@ export default function SessionsPage() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  useEffect(() => {
+  const fetchSessions = () => {
+    setLoading(true)
+    setError(null)
     fetch(`${BASE}/api/v1/sessions`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) {
+          throw new Error(`Failed to fetch sessions: ${r.statusText} (${r.status})`)
+        }
+        return r.json()
+      })
       .then((data: Session[] | { error?: string }) => {
+        if (data && typeof data === 'object' && 'error' in data && data.error) {
+          throw new Error(data.error)
+        }
         const rows = Array.isArray(data) ? data : []
         setSessions(rows)
         setAllYears([...new Set(rows.map(s => s.year))].sort((a, b) => b - a))
       })
-      .catch(console.error)
+      .catch(err => {
+        console.error(err)
+        setError(err.message || 'Failed to connect to the backend server. Please verify the Flask API is running.')
+      })
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchSessions()
   }, [])
 
   const filteredByYear = year === 'all' ? sessions : sessions.filter(s => s.year === year)
@@ -273,7 +291,44 @@ export default function SessionsPage() {
         </div>
       )}
 
-      {!loading && grouped.length === 0 && (
+      {error && (
+        <div style={{
+          textAlign: 'center',
+          padding: '40px 24px',
+          borderRadius: '24px',
+          background: 'rgba(232, 0, 45, 0.05)',
+          border: '1px solid rgba(232, 0, 45, 0.15)',
+          color: '#E8002D',
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '14px',
+          margin: '20px 0',
+          boxShadow: '0 10px 30px rgba(232, 0, 45, 0.05)',
+        }}>
+          <p style={{ fontWeight: 800, margin: '0 0 8px 0', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>API Connection Error</p>
+          <p style={{ margin: '0 0 20px 0', color: '#56657C', fontSize: '13px', lineHeight: 1.5 }}>{error}</p>
+          <button 
+            onClick={fetchSessions}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '999px',
+              background: '#E8002D',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '12px',
+              fontFamily: 'JetBrains Mono, monospace',
+              letterSpacing: '0.05em',
+              transition: 'all 0.2s',
+              boxShadow: '0 8px 20px rgba(232, 0, 45, 0.2)',
+            }}
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && grouped.length === 0 && (
         <div style={{ textAlign: 'center', padding: '64px 0', color: '#7A8CA5', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
           No archive sessions available for this filter.
         </div>

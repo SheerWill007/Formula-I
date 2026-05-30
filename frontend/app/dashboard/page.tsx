@@ -141,6 +141,7 @@ export default async function DashboardPage() {
             src={heroImage}
             alt="Circuit Hero"
             fill
+            sizes="100vw"
             style={{ objectFit: 'cover' }}
             priority
           />

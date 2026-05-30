@@ -28,6 +28,7 @@ function HeroNextRace({ race }: { race: { round: number, event_name: string, eve
         src="https://images.unsplash.com/photo-1699138346491-d6f4c7e04b85?q=80&w=2232&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         alt="F1 Car"
         fill
+        sizes="100vw"
         style={{ objectFit: 'cover', opacity: 0.7 }}
       />
 
