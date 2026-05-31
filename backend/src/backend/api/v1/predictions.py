@@ -9,7 +9,7 @@ from backend.extensions import get_engine
 predictions_bp = Blueprint("predictions", __name__)
 
 
-@predictions_bp.get("/sessions/<int:session_key>/predictions")
+@predictions_bp.get("/sessions/<int:session_key>/predict")
 def race_predictions(session_key: int):
     """
     Run ML predictions for a qualifying session.

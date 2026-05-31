@@ -3,7 +3,7 @@ Strategy API — tyre stints per driver for race sessions.
 """
 from flask import Blueprint, jsonify
 from sqlalchemy import text
-from backend.extensions import engine
+from backend.extensions import get_engine
 
 strategy_bp = Blueprint("strategy", __name__)
 
@@ -28,6 +28,7 @@ def _resolve(colour, team_name):
 
 @strategy_bp.get("/sessions/<int:session_key>/strategy")
 def race_strategy(session_key: int):
+    engine = get_engine()
     with engine.connect() as conn:
         has_stints = conn.execute(text("""
             SELECT COUNT(*) FROM lap_times
@@ -101,3 +102,50 @@ def race_strategy(session_key: int):
         stints.append(d)
 
     return jsonify({"total_laps": total_laps, "stints": stints})
+
+
+@strategy_bp.get("/sessions/<int:session_key>/race-order")
+def race_order(session_key: int):
+    """Return the race finishing order for a race session."""
+    engine = get_engine()
+    with engine.connect() as conn:
+        # Check if session exists and is a race
+        session = conn.execute(text("""
+            SELECT session_type, gp_name, year
+            FROM sessions WHERE session_key = :sk
+        """), {"sk": session_key}).mappings().first()
+
+        if not session:
+            return jsonify({"error": "Session not found"}), 404
+
+        # Get finishing positions from lap_times (final position of each driver)
+        rows = conn.execute(text("""
+            SELECT
+                d.driver_number,
+                d.abbreviation,
+                d.full_name,
+                d.team_name,
+                d.team_colour,
+                MAX(l.position) AS finishing_position,
+                MAX(l.lap_number) AS laps_completed,
+                MIN(l.lap_time_ms) AS best_lap_ms
+            FROM drivers d
+            LEFT JOIN lap_times l
+                ON l.driver_number = d.driver_number
+                AND l.session_key  = d.session_key
+                AND l.deleted      = FALSE
+            WHERE d.session_key = :sk
+            GROUP BY d.driver_number, d.abbreviation, d.full_name, d.team_name, d.team_colour
+            ORDER BY finishing_position ASC NULLS LAST, d.driver_number ASC
+        """), {"sk": session_key}).mappings().all()
+
+        if not rows:
+            return jsonify({"error": "No race data found"}), 404
+
+    positions = []
+    for r in rows:
+        d = dict(r)
+        d["team_colour"] = _resolve(d.get("team_colour"), d.get("team_name"))
+        positions.append(d)
+
+    return jsonify({"finishing_order": positions})

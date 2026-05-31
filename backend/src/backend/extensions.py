@@ -33,7 +33,3 @@ def set_engine(new_engine: Engine) -> None:
     global _engine
     _engine = new_engine
 
-
-# Legacy compatibility: direct access (deprecated, use get_engine() instead)
-engine = property(lambda self: get_engine())
-

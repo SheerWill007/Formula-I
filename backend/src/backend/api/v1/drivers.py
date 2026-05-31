@@ -7,7 +7,7 @@ GET /api/v1/sessions/<key>/drivers/<num>/compare  → head-to-head stats
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 
-from backend.extensions import engine
+from backend.extensions import get_engine
 
 drivers_bp = Blueprint("drivers", __name__)
 
@@ -15,6 +15,7 @@ drivers_bp = Blueprint("drivers", __name__)
 @drivers_bp.get("/sessions/<int:session_key>/drivers")
 def list_drivers(session_key: int):
     """All drivers in a session with their best lap time."""
+    engine = get_engine()
     with engine.connect() as conn:
         rows = conn.execute(text("""
             SELECT
@@ -65,6 +66,7 @@ def compare_drivers(session_key: int):
 
     results = []
 
+    engine = get_engine()
     with engine.connect() as conn:
         for num in driver_nums:
             stats = conn.execute(text("""

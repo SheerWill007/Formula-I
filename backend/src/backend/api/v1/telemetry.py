@@ -12,7 +12,7 @@ GET /api/v1/sessions/<key>/telemetry/stats?drivers=44,63
 """
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
-from backend.extensions import engine
+from backend.extensions import get_engine
 
 telemetry_bp = Blueprint("telemetry", __name__)
 
@@ -115,6 +115,7 @@ def _resolve_telemetry_lap(
 @telemetry_bp.get("/sessions/<int:session_key>/telemetry/<int:driver_number>")
 def driver_telemetry(session_key: int, driver_number: int):
     """Fastest lap telemetry for one driver."""
+    engine = get_engine()
     with engine.connect() as conn:
         lap_number = _get_fastest_lap_number(conn, session_key, driver_number)
         if lap_number is None:
@@ -163,6 +164,7 @@ def telemetry_compare(session_key: int):
 
     result = {}
 
+    engine = get_engine()
     with engine.connect() as conn:
         for dn in driver_nums:
             lap_number = _resolve_telemetry_lap(conn, session_key, dn, pinned_laps.get(dn))
@@ -212,6 +214,7 @@ def telemetry_stats(session_key: int):
         except ValueError:
             return {"error": "Driver numbers must be integers"}, 400
 
+    engine = get_engine()
     with engine.connect() as conn:
         # Get fastest lap per driver first
         fastest = conn.execute(text("""
