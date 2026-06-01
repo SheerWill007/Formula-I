@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql+psycopg://pitwall:pitwall@localhost:5432/pitwall"
+    database_url: str = "postgresql+psycopg://boxup:boxup@localhost:5432/boxup"
 
     # Kafka
     kafka_bootstrap_servers: str = "localhost:9092"

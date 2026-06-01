@@ -8,7 +8,7 @@ Run manually:
     uv run python -m ingestion.auto_ingest
 
 Run on a schedule (cron example — every hour):
-    0 * * * * cd /path/to/pitwall && uv run python -m ingestion.auto_ingest >> logs/auto_ingest.log 2>&1
+    0 * * * * cd /path/to/boxup && uv run python -m ingestion.auto_ingest >> logs/auto_ingest.log 2>&1
 """
 from __future__ import annotations
 

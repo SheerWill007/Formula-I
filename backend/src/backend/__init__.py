@@ -38,7 +38,7 @@ def _start_auto_ingest_scheduler() -> None:
 
     _auto_ingest_thread = threading.Thread(
         target=runner,
-        name="pitwall-auto-ingest",
+        name="boxup-auto-ingest",
         daemon=True,
     )
     _auto_ingest_thread.start()

@@ -23,7 +23,7 @@ export default function Sidebar() {
     { name: 'DRIVER ANALYSIS', icon: User, href: '/analysis', active: pathname === '/analysis' },
     { name: 'CAR SETUP', icon: Sliders, href: '/setup', active: pathname === '/setup' },
     { name: 'STRATEGY TOOL', icon: Brain, href: '/predictions', active: pathname === '/predictions' },
-    { name: 'PIT WALL', icon: Headphones, href: '/pitwall', active: pathname === '/pitwall' },
+    { name: 'BOX UP', icon: Headphones, href: '/boxup', active: pathname === '/boxup' },
   ]
 
   return (

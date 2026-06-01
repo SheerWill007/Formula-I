@@ -135,7 +135,7 @@ export default async function PredictionsPage() {
                 Strategy Predictions Architecture
               </h4>
               <p style={{ color: '#56657C', fontSize: '14px', lineHeight: 1.6, margin: 0 }}>
-                The Pitwall AI predictor relies on an XGBoost classifier combined with SHAP feature explanations. It evaluates sector times from Qualifying, stint times from FP2 long runs, and ambient session weather conditions to compute the winning probability of each driver on the grid.
+                The BoxUp AI predictor relies on an XGBoost classifier combined with SHAP feature explanations. It evaluates sector times from Qualifying, stint times from FP2 long runs, and ambient session weather conditions to compute the winning probability of each driver on the grid.
               </p>
             </div>
 

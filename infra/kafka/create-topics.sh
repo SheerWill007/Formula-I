@@ -15,7 +15,7 @@ set -e  # exit immediately if any command fails
 
 BOOTSTRAP="localhost:9092"
 RETENTION_MS=604800000   # 7 days in milliseconds
-CONTAINER="pitwall-kafka"
+CONTAINER="boxup-kafka"
 
 echo ""
 echo "Creating Slipstream Kafka topics..."

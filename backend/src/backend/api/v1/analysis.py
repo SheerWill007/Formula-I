@@ -2421,7 +2421,7 @@ def driver_compare_stats(session_key: int):
     )
 
 
-# ── Insight engine — rules-based, pitwall-quality ─────────────────────────────
+# ── Insight engine — rules-based, boxup-quality ─────────────────────────────
 
 
 def generate_insights(driver_keys: list, drivers: dict, matched_corners: list) -> dict:
@@ -2431,7 +2431,7 @@ def generate_insights(driver_keys: list, drivers: dict, matched_corners: list) -
     Design philosophy:
     - Every insight cites specific numbers — no vague claims
     - Insights are tiered: CRITICAL (lap time impact) > NOTABLE > INFO
-    - Each insight maps to a real engineering concept pitwall engineers use
+    - Each insight maps to a real engineering concept boxup engineers use
     - No LLM required — rules derived from F1 engineering knowledge
 
     Returns:
@@ -2460,8 +2460,8 @@ def generate_insights(driver_keys: list, drivers: dict, matched_corners: list) -
     insights = []
 
     # ── Insight 1: Braking commitment ────────────────────────────────────────
-    # "Who is braver under braking" — the most watched metric in F1 pitwall
-    # Pitwall engineers call this "brake point confidence"
+    # "Who is braver under braking" — the most watched metric in F1 boxup
+    # BoxUp engineers call this "brake point confidence"
     # Measured by: average braking distance across all corners
     # Shorter braking dist = later brake point = more confidence/risk
     brake_delta = s0["avg_braking_dist_m"] - s1["avg_braking_dist_m"]

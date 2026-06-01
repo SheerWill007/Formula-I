@@ -13,7 +13,7 @@ def _is_missing_table_error(exc: ProgrammingError) -> bool:
 def _missing_schema_response():
     return jsonify({
         "error": "Database schema is not initialized",
-        "detail": "The backend connected to Postgres, but required Pitwall tables such as sessions do not exist.",
+        "detail": "The backend connected to Postgres, but required BoxUp tables such as sessions do not exist.",
         "suggested_command": "uv run alembic -c apps/backend/alembic.ini upgrade head",
     }), 503
 

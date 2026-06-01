@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     testing: bool = False
 
     # Database — Railway injects DATABASE_URL as postgres:// so we normalise it
-    database_url: str = "postgresql+psycopg://pitwall:pitwall@localhost:5432/pitwall"
+    database_url: str = "postgresql+psycopg://boxup:boxup@localhost:5432/boxup"
 
     # Redis + Kafka — optional, not required for core app
     redis_url: str = "redis://localhost:6379/0"

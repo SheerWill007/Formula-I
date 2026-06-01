@@ -178,7 +178,7 @@ export default function Hero() {
           }}
         >
           <Play size={20} fill="#FFFFFF" />
-          Enter Pitwall
+          Enter BoxUp
         </Link>
 
         {/* Slideshow Indicators */}
