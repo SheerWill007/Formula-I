@@ -1,466 +1,194 @@
-# Formula 1 Analytics Platform
+# Boxup: Formula 1 Data Analytics Platform
+
+A comprehensive Formula 1 telemetry and analytics platform that provides real-time race insights, performance analysis, and machine learning-powered predictions. Built with modern web technologies and a scalable microservices architecture.
 
 ## Overview
 
-Formula 1 Analytics Platform is an enterprise-grade motorsport data intelligence system designed to provide real-time telemetry analysis, predictive race strategy modeling, and comprehensive performance metrics for Formula 1 racing. Built on a modern microservices architecture, the platform delivers sub-millisecond latency data processing and advanced machine learning capabilities for competitive motorsport analytics.
+Boxup aggregates and visualizes Formula 1 telemetry data, driver performance metrics, and race analytics in real-time. The platform enables engineers, analysts, and enthusiasts to explore detailed telemetry traces, brake analysis, corner insights, and predictive models for championship standings and race outcomes.
 
-## Architecture
+## Key Features
 
-### Technology Stack
+- **Real-Time Telemetry Visualization**: Interactive speed traces, brake analysis, and corner-by-corner performance metrics
+- **Race Analysis**: Comprehensive session data including qualifying segments, practice sessions, and race telemetry
+- **Driver Performance Analytics**: Comparative analysis between drivers with sector breakdowns and performance matrices
+- **Weather Integration**: Real-time weather conditions tracked throughout race sessions
+- **Championship Predictions**: Machine learning models for predicting championship outcomes and race results
+- **Responsive Dashboard**: Modern web interface with real-time updates and interactive visualizations
+- **Data Ingestion Pipeline**: Automated data collection and processing from official F1 sources
 
-**Frontend**
-- Next.js 14 with React 18
-- TypeScript for type-safe development
-- Tailwind CSS for responsive design
-- Vercel Analytics and Speed Insights integration
+## Tech Stack
 
-**Backend**
-- Python 3.11+ with Flask framework
-- PostgreSQL 14+ for relational data storage
-- SQLAlchemy ORM with Alembic migrations
-- FastF1 library for official FIA data ingestion
-- Apache Kafka for distributed event streaming
+### Frontend
+- **Framework**: Next.js 16 (React 19)
+- **Styling**: Tailwind CSS, PostCSS
+- **Charts & Visualization**: Recharts, Plotly.js, react-d3-speedometer
+- **Real-Time Updates**: Socket.io Client
+- **Testing**: Vitest
+- **Linting**: ESLint
+- **Deployment**: Vercel
 
-**Machine Learning**
-- FLAML AutoML ensemble models
-- SHAP interpretability framework
-- Scikit-learn for model training and validation
-- TimescaleDB hypertables for time-series optimization
+### Backend
+- **Language**: Python 3
+- **Framework**: Flask
+- **Database**: PostgreSQL with TimescaleDB (time-series optimization)
+- **Migrations**: Alembic
+- **Message Queue**: Apache Kafka
+- **Caching**: Redis
+- **ML Tracking**: MLflow
 
-### System Components
+### Infrastructure
+- **Containerization**: Docker & Docker Compose
+- **Orchestration**: Kafka for event streaming
+- **Database**: TimescaleDB for time-series telemetry data
+- **UI Tools**: Kafka UI for message queue monitoring
+
+## Project Structure
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend Layer                          │
-│  Next.js Application with Server-Side Rendering            │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      API Gateway                            │
-│  Flask REST API with CORS-enabled endpoints                │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                ┌───────────┴───────────┐
-                ▼                       ▼
-┌──────────────────────┐    ┌──────────────────────┐
-│  PostgreSQL Database │    │  FastF1 Data Layer   │
-│  Normalized Schema   │    │  Official FIA Data   │
-└──────────────────────┘    └──────────────────────┘
-                │
-                ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Machine Learning Pipeline                      │
-│  AutoML Training, SHAP Analysis, Prediction Engine         │
-└─────────────────────────────────────────────────────────────┘
+.
+├── frontend/                 # Next.js web application
+│   ├── app/                 # Page routes and layouts
+│   ├── components/          # Reusable React components
+│   ├── lib/                 # Utilities and API clients
+│   └── types/               # TypeScript type definitions
+├── backend/                 # Python Flask API
+│   ├── src/backend/        # Core application logic
+│   │   ├── api/            # API endpoints
+│   │   ├── config.py       # Configuration management
+│   │   └── extensions.py   # Database and service extensions
+│   ├── migrations/         # Alembic database migrations
+│   └── tests/              # Test suite
+├── packages/
+│   ├── ingestion/          # F1 data ingestion pipeline
+│   ├── ml/                 # Machine learning models and training
+│   └── workers/            # Background job processors
+└── infra/                  # Infrastructure configuration
+    ├── docker-compose.yml  # Local development environment
+    └── postgres/           # Database initialization scripts
 ```
 
-## Features
-
-### Real-Time Telemetry Analysis
-- High-frequency sensor data processing from 300+ vehicle sensors
-- Sub-millisecond latency telemetry streaming via Apache Kafka
-- Distributed data alignment across multiple telemetry sources
-- 2.4GB/s sustained data throughput capacity
-
-### Predictive Race Strategy
-- Monte Carlo simulation engine for pit-stop optimization
-- Compound degradation modeling using TimescaleDB hypertables
-- Real-time strategy recommendations based on live race conditions
-- Historical performance correlation analysis
-
-### Machine Learning Inference
-- Neural network ensembles trained on 70+ years of historical race data
-- Overtaking probability prediction with SHAP interpretability
-- Engine fatigue modeling and reliability forecasting
-- AutoML-optimized hyperparameter tuning
-
-### Performance Analytics
-- Lap time evolution tracking with sector-level granularity
-- Stint pace analysis with tire degradation metrics
-- Position change visualization across race duration
-- Gap-to-leader calculations with cumulative time tracking
-
-### Data Ingestion Pipeline
-- Automated synchronization from FastF1, OpenF1, and Jolpica APIs
-- Zero-configuration data pipeline with scheduled ingestion
-- 99.9% ingestion accuracy with automatic error recovery
-- Incremental updates with conflict resolution
-
-## Installation
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.0 or higher
-- Python 3.11 or higher
-- PostgreSQL 14 or higher
-- UV package manager for Python dependencies
+- Node.js 18+ (for frontend)
+- Python 3.9+ (for backend)
+- Docker & Docker Compose (for infrastructure)
+- PostgreSQL 15+ (or use Docker)
 
-### Backend Setup
+### Installation
 
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd "Formula 1"
+   ```
+
+2. **Start infrastructure services**
+   ```bash
+   cd infra
+   docker-compose up -d
+   ```
+   This starts PostgreSQL, TimescaleDB, Kafka, and Kafka UI.
+
+3. **Setup backend**
+   ```bash
+   cd backend
+   pip install -r ../requirements.txt
+   flask db upgrade  # Run migrations
+   python main.py
+   ```
+   The backend API will be available at `http://localhost:8000`
+
+4. **Setup frontend**
+   ```bash
+   cd frontend
+   pnpm install
+   pnpm dev
+   ```
+   The frontend will be available at `http://localhost:3000`
+
+## Configuration
+
+Environment variables are managed through `.env` files. Key configurations:
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_URL`: Redis connection URL
+- `KAFKA_BOOTSTRAP_SERVERS`: Kafka broker addresses
+- `MLFLOW_TRACKING_URI`: MLflow server URL
+- `AUTO_INGEST_ENABLED`: Enable automatic F1 data ingestion
+
+## Development
+
+### Running Tests
+
+**Frontend:**
 ```bash
-# Navigate to backend directory
-cd backend
-
-# Install Python dependencies using UV
-uv sync
-
-# Configure environment variables
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Initialize database schema
-uv run alembic upgrade head
-
-# Start development server
-uv run flask --app main:app run --debug
-```
-
-### Frontend Setup
-
-```bash
-# Navigate to frontend directory
 cd frontend
-
-# Install Node.js dependencies
-npm install
-
-# Configure environment variables
-cp .env.example .env.local
-# Edit .env.local with API endpoint
-
-# Start development server
-npm run dev
+pnpm test
 ```
 
-### Database Configuration
+**Backend:**
+```bash
+cd backend
+pytest
+```
 
-```sql
--- Create PostgreSQL database
-CREATE DATABASE formula1_analytics;
+### Code Quality
 
--- Create user with appropriate permissions
-CREATE USER f1_user WITH PASSWORD 'secure_password';
-GRANT ALL PRIVILEGES ON DATABASE formula1_analytics TO f1_user;
+**Frontend linting:**
+```bash
+cd frontend
+pnpm lint
+```
+
+**Database Migrations:**
+```bash
+cd backend
+alembic upgrade head
 ```
 
 ## API Documentation
 
-### Core Endpoints
+The backend provides REST API endpoints for:
 
-#### Sessions
-```
-GET  /api/v1/sessions
-GET  /api/v1/sessions/{session_key}
-GET  /api/v1/sessions/{session_key}/race-results
-```
-
-#### Telemetry
-```
-GET  /api/v1/sessions/{session_key}/telemetry
-GET  /api/v1/sessions/{session_key}/telemetry/compare
-```
-
-#### Analysis
-```
-GET  /api/v1/sessions/{session_key}/analysis/lap-evolution
-GET  /api/v1/sessions/{session_key}/analysis/stint-pace
-GET  /api/v1/sessions/{session_key}/analysis/position-changes
-GET  /api/v1/sessions/{session_key}/analysis/tyre-deg
-```
-
-#### Predictions
-```
-GET  /api/v1/sessions/{session_key}/predictions
-GET  /api/v1/predictions/latest
-```
-
-#### Standings
-```
-GET  /api/v1/standings/drivers?year=2026
-GET  /api/v1/standings/constructors?year=2026
-```
-
-### Response Format
-
-All API responses follow a consistent JSON structure:
-
-```json
-{
-  "data": {},
-  "metadata": {
-    "timestamp": "2026-05-30T12:00:00Z",
-    "version": "1.0.0"
-  },
-  "error": null
-}
-```
-
-Error responses include detailed diagnostic information:
-
-```json
-{
-  "error": "Database connection failed",
-  "detail": "Connection refused on port 5432",
-  "hint": "Ensure PostgreSQL is running and DATABASE_URL is configured",
-  "code": 503
-}
-```
-
-## Data Model
-
-### Core Entities
-
-**Sessions**
-- Unique session identifier (session_key)
-- Event metadata (year, GP name, country)
-- Session type classification (Practice, Qualifying, Sprint, Race)
-- Environmental conditions (temperature, humidity, rainfall)
-
-**Drivers**
-- Driver identification (number, name, abbreviation)
-- Team affiliation and branding
-- Session-specific participation records
-
-**Lap Times**
-- Granular lap performance metrics
-- Sector-level timing data (S1, S2, S3)
-- Tire compound and degradation tracking
-- Position and stint information
-
-**Telemetry**
-- High-frequency sensor readings
-- Spatial coordinates (X, Y, Z)
-- Vehicle dynamics (speed, throttle, brake, DRS)
-- Distance-based alignment
-
-## Machine Learning Pipeline
-
-### Model Training
-
-```bash
-# Train global model on all historical data
-uv run python -m ml.train
-
-# Train circuit-specific model
-uv run python -m ml.train --gp "Monaco Grand Prix"
-
-# Evaluate model performance
-uv run python -m ml.evaluate
-```
-
-### Feature Engineering
-
-The platform employs a comprehensive feature engineering pipeline:
-
-- **Qualifying Performance**: Grid position, Q1/Q2/Q3 times, sector performance
-- **Historical Context**: Driver/team historical performance at circuit
-- **Environmental Factors**: Weather conditions, track temperature, rainfall
-- **Tire Strategy**: Compound selection, degradation rates
-- **Reliability Metrics**: Engine age, component lifecycle tracking
-
-### Model Validation
-
-- 5-fold cross-validation with stratified sampling
-- Top-3 accuracy metric for podium prediction
-- Brier score for probability calibration
-- Permutation importance for feature ranking
-- Variance Inflation Factor (VIF) for multicollinearity detection
-
-## Performance Optimization
-
-### Database Indexing
-
-```sql
--- Composite index for session-driver queries
-CREATE INDEX idx_lap_times_session_driver 
-ON lap_times(session_key, driver_number);
-
--- Covering index for telemetry distance queries
-CREATE INDEX idx_telemetry_session_distance 
-ON telemetry(session_key, distance_m) 
-INCLUDE (speed_kph, throttle_pct);
-```
-
-### Caching Strategy
-
-- FastF1 data cached locally to minimize API calls
-- In-memory LRU cache for frequently accessed session data
-- Redis integration for distributed caching (optional)
-
-### Query Optimization
-
-- Materialized views for complex aggregations
-- Prepared statements for parameterized queries
-- Connection pooling with configurable pool size
-- Query result pagination for large datasets
-
-## Security Considerations
-
-### Authentication
-- JWT-based authentication for API access
-- Role-based access control (RBAC) for administrative functions
-- API rate limiting to prevent abuse
-
-### Data Protection
-- Parameterized queries to prevent SQL injection
-- Input validation and sanitization
-- CORS configuration for cross-origin requests
-- Environment variable management for sensitive credentials
-
-### Network Security
-- HTTPS enforcement in production
-- Database connection encryption (SSL/TLS)
-- Firewall rules for database access restriction
+- `/api/sessions` - Race and practice session data
+- `/api/drivers` - Driver information and statistics
+- `/api/laps` - Lap telemetry and timing
+- `/api/analysis` - Performance analysis and comparisons
+- `/api/health` - Service health checks
 
 ## Deployment
 
-### Production Configuration
+The project is configured for deployment on:
 
-```bash
-# Backend production server (Gunicorn)
-gunicorn -w 4 -b 0.0.0.0:8000 main:app
+- **Frontend**: Vercel (optimized for Next.js)
+- **Backend**: Railway or similar container platforms
+- **Infrastructure**: Kubernetes-ready with Docker Compose for local development
 
-# Frontend production build
-npm run build
-npm run start
-```
+## Data Pipeline
 
-### Docker Deployment
-
-```dockerfile
-# Backend Dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY . .
-RUN pip install uv && uv sync
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "main:app"]
-```
-
-### Environment Variables
-
-**Backend**
-```
-DATABASE_URL=postgresql://user:pass@localhost:5432/f1_analytics
-SECRET_KEY=your-secret-key-here
-FASTF1_CACHE_DIR=/var/cache/fastf1
-AUTO_INGEST_ENABLED=true
-AUTO_INGEST_INTERVAL_MINUTES=30
-```
-
-**Frontend**
-```
-NEXT_PUBLIC_API_URL=https://api.formula1analytics.com
-NEXT_PUBLIC_ANALYTICS_ID=your-analytics-id
-```
-
-## Monitoring and Observability
-
-### Logging
-- Structured logging with JSON output
-- Log aggregation via ELK stack or similar
-- Request/response logging for API endpoints
-- Error tracking with stack traces
-
-### Metrics
-- API response time monitoring
-- Database query performance tracking
-- Cache hit/miss ratios
-- Data ingestion success rates
-
-### Health Checks
-```
-GET /health
-```
-
-Returns system health status:
-```json
-{
-  "status": "healthy",
-  "database": "connected",
-  "cache": "operational",
-  "version": "1.0.0"
-}
-```
+1. **Ingestion**: Automated service pulls official F1 data
+2. **Processing**: Data is validated, enriched, and stored in TimescaleDB
+3. **Streaming**: Events are published to Kafka topics for real-time consumers
+4. **Analysis**: ML models process telemetry for predictions
+5. **Visualization**: Frontend retrieves and visualizes data via REST API
 
 ## Contributing
 
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/enhancement`)
-3. Implement changes with comprehensive test coverage
-4. Run linting and type checking (`npm run lint`, `uv run mypy`)
-5. Submit pull request with detailed description
-
-### Code Standards
-
-- Python: PEP 8 compliance, type hints required
-- TypeScript: Strict mode enabled, ESLint configuration
-- SQL: Normalized schema design, indexed foreign keys
-- Documentation: Inline comments for complex logic
-
-### Testing Requirements
-
-- Unit tests for business logic (pytest, Jest)
-- Integration tests for API endpoints
-- End-to-end tests for critical user flows
-- Minimum 80% code coverage threshold
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Push to the branch (`git push origin feature/amazing-feature`)
+4. Open a Pull Request
 
 ## License
 
-Copyright (c) 2026 Formula 1 Analytics Platform
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+This project is licensed under the terms specified in the LICENSE file.
 
 ## Support
 
-For technical support, bug reports, or feature requests:
-
-- **Repository**: https://github.com/SheerWill007/Formula-I
-- **Issues**: https://github.com/SheerWill007/Formula-I/issues
-- **Documentation**: https://github.com/SheerWill007/Formula-I/wiki
-
-## Acknowledgments
-
-This platform leverages the following open-source projects:
-
-- **FastF1**: Official FIA Formula 1 data access library
-- **Jolpica F1 API**: Historical race data and standings
-- **OpenF1**: Real-time telemetry streaming
-- **Next.js**: React framework by Vercel
-- **Flask**: Python web framework
-- **PostgreSQL**: Advanced open-source database
-
-## Roadmap
-
-### Version 1.1 (Q3 2026)
-- Real-time WebSocket telemetry streaming
-- Advanced tire degradation modeling
-- Multi-language support (EN, ES, FR, DE, IT)
-
-### Version 1.2 (Q4 2026)
-- GraphQL API implementation
-- Mobile application (iOS/Android)
-- Enhanced machine learning models with transformer architecture
-
-### Version 2.0 (Q1 2027)
-- Distributed microservices architecture
-- Kubernetes orchestration
-- Advanced visualization with 3D track rendering
+For issues, questions, or suggestions, please open an issue on the repository.
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: May 30, 2026  
-**Maintained By**: Formula 1 Analytics Team
+**Last Updated**: June 2026
