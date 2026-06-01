@@ -183,7 +183,7 @@ The project is configured for deployment on:
 
 ## License
 
-This project is licensed under the terms specified in the LICENSE file.
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See the LICENSE file for details.
 
 ## Support
 
