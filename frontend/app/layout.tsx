@@ -66,8 +66,8 @@ function TubeNavBar() {
       right: 0,
       zIndex: 1000,
       background: dark
-        ? 'rgba(0,0,0,0.88)'
-        : 'rgba(255,255,255,0.90)',
+        ? 'rgba(0,0,0,0.3)'
+        : 'rgba(255,255,255,0.3)',
       backdropFilter: 'blur(20px) saturate(180%)',
       WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       borderBottom: dark
@@ -193,24 +193,35 @@ function TubeNavBar() {
           dark={dark}
           title={`Volume: ${volume.toUpperCase()} - Click to cycle`}
         >
-          {volume === 'mute' ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <line x1="23" y1="9" x2="17" y2="15" />
-              <line x1="17" y1="9" x2="23" y2="15" />
-            </svg>
-          ) : volume === 'low' ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-            </svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-            </svg>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {volume === 'mute' ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+                <span style={{ fontSize: 10, fontWeight: 700 }}>MUTE</span>
+              </>
+            ) : volume === 'low' ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+                <span style={{ fontSize: 10, fontWeight: 700 }}>LOW</span>
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+                <span style={{ fontSize: 10, fontWeight: 700 }}>MAX</span>
+              </>
+            )}
+          </div>
         </TubeButton>
 
         {/* Theme Control */}
@@ -306,106 +317,51 @@ function TubeButton({
 }
 
 /* ─────────────────────────────────────────────
-   AMBIENT MUSIC PLAYER  (hidden, uses Web Audio API synth)
-   Generates a low, pulsing F1-pit-lane drone — no external files needed.
+   BACKGROUND MUSIC PLAYER  (plays MP3 on all pages except home)
 ───────────────────────────────────────────── */
-function AmbientMusicPlayer({ volume }: { volume: VolumeLevel }) {
-  const ctxRef = useRef<AudioContext | null>(null)
-  const nodesRef = useRef<AudioNode[]>([])
-  const masterGainRef = useRef<GainNode | null>(null)
+function BackgroundMusicPlayer({ volume }: { volume: VolumeLevel }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const pathname = usePathname()
+  const isHomePage = pathname === '/'
 
   useEffect(() => {
-    const playing = volume !== 'mute'
-    
-    if (playing) {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-      if (!AudioCtx) return
-      const ctx = new AudioCtx()
-      ctxRef.current = ctx
+    // Create audio element if it doesn't exist
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/baakipageOG.mp3')
+      audioRef.current.loop = true
+      audioRef.current.preload = 'auto'
+    }
 
-      // Master gain
-      const master = ctx.createGain()
-      masterGainRef.current = master
-      const targetVolume = volume === 'low' ? 0.08 : 0.18
-      master.gain.setValueAtTime(0, ctx.currentTime)
-      master.gain.linearRampToValueAtTime(targetVolume, ctx.currentTime + 2)
-      master.connect(ctx.destination)
+    const audio = audioRef.current
 
-      // Deep sub drone  55 Hz
-      const sub = ctx.createOscillator()
-      sub.type = 'sine'
-      sub.frequency.value = 55
-      const subGain = ctx.createGain()
-      subGain.gain.value = 0.6
-      sub.connect(subGain)
-      subGain.connect(master)
-      sub.start()
-
-      // Mid harmonic  110 Hz
-      const mid = ctx.createOscillator()
-      mid.type = 'triangle'
-      mid.frequency.value = 110
-      const midGain = ctx.createGain()
-      midGain.gain.value = 0.25
-      mid.connect(midGain)
-      midGain.connect(master)
-      mid.start()
-
-      // High shimmer  220 Hz, slow vibrato
-      const high = ctx.createOscillator()
-      high.type = 'sine'
-      high.frequency.value = 220
-      const lfo = ctx.createOscillator()
-      lfo.frequency.value = 0.3
-      const lfoGain = ctx.createGain()
-      lfoGain.gain.value = 3
-      lfo.connect(lfoGain)
-      lfoGain.connect(high.frequency)
-      lfo.start()
-      const highGain = ctx.createGain()
-      highGain.gain.value = 0.08
-      high.connect(highGain)
-      highGain.connect(master)
-      high.start()
-
-      // Slow pulse LFO on master
-      const pulseLfo = ctx.createOscillator()
-      pulseLfo.frequency.value = 0.12
-      const pulseMod = ctx.createGain()
-      pulseMod.gain.value = 0.06
-      pulseLfo.connect(pulseMod)
-      pulseMod.connect(master.gain)
-      pulseLfo.start()
-
-      nodesRef.current = [sub, mid, high, lfo, pulseLfo]
+    // Only play on non-home pages
+    if (!isHomePage && volume !== 'mute') {
+      // Set volume based on level
+      const targetVolume = volume === 'low' ? 0.3 : 0.6
+      audio.volume = targetVolume
+      
+      // Play the audio
+      audio.play().catch((err) => {
+        console.log('Audio playback failed:', err)
+      })
     } else {
-      if (ctxRef.current && masterGainRef.current) {
-        const ctx = ctxRef.current
-        const master = masterGainRef.current
-        master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5)
-        nodesRef.current.forEach((n) => {
-          try { (n as OscillatorNode).stop(ctx.currentTime + 1.6) } catch { }
-        })
-        setTimeout(() => {
-          try { ctx.close() } catch { }
-          ctxRef.current = null
-          masterGainRef.current = null
-          nodesRef.current = []
-        }, 1800)
-      }
+      // Pause on home page or when muted
+      audio.pause()
     }
-  }, [volume])
 
-  // Update volume when it changes
-  useEffect(() => {
-    if (masterGainRef.current && ctxRef.current && volume !== 'mute') {
-      const targetVolume = volume === 'low' ? 0.08 : 0.18
-      masterGainRef.current.gain.linearRampToValueAtTime(
-        targetVolume, 
-        ctxRef.current.currentTime + 0.3
-      )
+    return () => {
+      // Don't destroy the audio element, just pause it
+      // This keeps it ready for the next page
     }
-  }, [volume])
+  }, [volume, isHomePage])
+
+  // Update volume when it changes (without restarting playback)
+  useEffect(() => {
+    if (audioRef.current && !isHomePage && volume !== 'mute') {
+      const targetVolume = volume === 'low' ? 0.3 : 0.6
+      audioRef.current.volume = targetVolume
+    }
+  }, [volume, isHomePage])
 
   return null
 }
@@ -503,8 +459,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Tube navigation bar */}
             <TubeNavBar />
 
-            {/* Ambient music synth */}
-            <AmbientMusicPlayer volume={volume} />
+            {/* Background music player */}
+            <BackgroundMusicPlayer volume={volume} />
 
             {/* Main app layout */}
             <main
