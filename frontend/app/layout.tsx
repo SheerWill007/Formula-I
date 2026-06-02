@@ -3,7 +3,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
-import BottomNav from '@/components/layout/BottomNav'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -32,7 +31,7 @@ export const MusicContext = createContext<MusicCtx>({
 export const useMusic = () => useContext(MusicContext)
 
 /* ─────────────────────────────────────────────
-   TUBE NAV BAR  (floating pill with integrated controls)
+   TUBE NAV BAR  (logo left, nav center, controls right)
 ───────────────────────────────────────────── */
 function TubeNavBar() {
   const pathname = usePathname()
@@ -59,125 +58,134 @@ function TubeNavBar() {
       height: 70,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
-      padding: '0 24px',
+      justifyContent: 'space-between',
+      padding: '0 40px',
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       zIndex: 1000,
-      pointerEvents: 'none',
+      background: dark
+        ? 'rgba(0,0,0,0.88)'
+        : 'rgba(255,255,255,0.90)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      borderBottom: dark
+        ? '1px solid rgba(16,185,129,0.15)'
+        : '1px solid rgba(15,23,42,0.10)',
     }}>
-      {/* Centered Tube Navigation */}
+      {/* LEFT: Logo */}
+      <Link href="/" style={{ 
+        textDecoration: 'none', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 8,
+        padding: '6px 12px',
+        borderRadius: 8,
+        transition: 'background 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = dark 
+          ? 'rgba(255,255,255,0.06)' 
+          : 'rgba(15,23,42,0.05)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+      }}>
+        <span 
+          data-music-dot
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: '#E10600',
+            boxShadow: '0 0 8px #E10600',
+          }} 
+        />
+        <img 
+          src="/favicon-32x32.png" 
+          alt="F1 Logo" 
+          style={{
+            width: 28,
+            height: 28,
+            objectFit: 'contain',
+          }}
+        />
+        <span style={{
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 900,
+          fontSize: 16,
+          color: dark ? '#F1F5F9' : '#0F172A',
+          letterSpacing: '-0.02em',
+          textTransform: 'uppercase',
+          fontStyle: 'italic',
+        }}>
+          Formula 1
+        </span>
+      </Link>
+
+      {/* CENTER: Nav Items */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 4,
         background: dark
-          ? 'rgba(0,0,0,0.88)'
-          : 'rgba(255,255,255,0.90)',
+          ? 'rgba(0,0,0,0.4)'
+          : 'rgba(255,255,255,0.6)',
         border: dark
           ? '1px solid rgba(16,185,129,0.25)'
           : '1px solid rgba(15,23,42,0.15)',
         borderRadius: 999,
         padding: '8px 16px',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         boxShadow: dark
-          ? '0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(16,185,129,0.1)'
-          : '0 8px 32px rgba(15,23,42,0.15), inset 0 1px 0 rgba(255,255,255,0.8)',
-        transition: 'all 0.3s ease',
-        pointerEvents: 'auto',
-        animation: 'tubeSlideIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both',
+          ? '0 4px 16px rgba(0,0,0,0.4)'
+          : '0 4px 16px rgba(15,23,42,0.08)',
       }}>
-        {/* Logo */}
-        <Link href="/" style={{ 
-          textDecoration: 'none', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 6,
-          padding: '6px 12px',
-          borderRadius: 999,
-          transition: 'background 0.2s',
-        }}>
-          <span 
-            data-music-dot
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: '#E10600',
-              boxShadow: '0 0 8px #E10600',
-            }} 
-          />
-          <img 
-            src="/favicon-32x32.png" 
-            alt="F1 Logo" 
-            style={{
-              width: 24,
-              height: 24,
-              objectFit: 'contain',
-            }}
-          />
-        </Link>
+        {navItems.map((item) => {
+          const isActive = item.active
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              style={{
+                fontSize: 11,
+                fontWeight: isActive ? 700 : 600,
+                color: isActive ? '#E10600' : dark ? '#94A3B8' : '#64748B',
+                textDecoration: 'none',
+                letterSpacing: '0.02em',
+                padding: '8px 16px',
+                borderRadius: 999,
+                background: isActive 
+                  ? 'rgba(225,6,0,0.12)' 
+                  : 'transparent',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = dark 
+                    ? 'rgba(255,255,255,0.06)' 
+                    : 'rgba(15,23,42,0.05)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = 'transparent'
+                }
+              }}
+            >
+              {item.name}
+            </Link>
+          )
+        })}
+      </div>
 
-        {/* Divider */}
-        <span style={{
-          width: 1,
-          height: 20,
-          background: dark ? 'rgba(16,185,129,0.25)' : 'rgba(15,23,42,0.15)',
-          margin: '0 4px',
-        }} />
-
-        {/* Nav Items */}
-        <div className="topbar-nav-links" style={{ display: 'flex', gap: 2 }}>
-          {navItems.map((item) => {
-            const isActive = item.active
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                style={{
-                  fontSize: 11,
-                  fontWeight: isActive ? 700 : 600,
-                  color: isActive ? '#E10600' : dark ? '#94A3B8' : '#64748B',
-                  textDecoration: 'none',
-                  letterSpacing: '0.02em',
-                  padding: '8px 16px',
-                  borderRadius: 999,
-                  background: isActive 
-                    ? 'rgba(225,6,0,0.12)' 
-                    : 'transparent',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = dark 
-                      ? 'rgba(255,255,255,0.06)' 
-                      : 'rgba(15,23,42,0.05)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'transparent'
-                  }
-                }}
-              >
-                {item.name}
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* Divider */}
-        <span style={{
-          width: 1,
-          height: 20,
-          background: dark ? 'rgba(16,185,129,0.25)' : 'rgba(15,23,42,0.15)',
-          margin: '0 4px',
-        }} />
-
+      {/* RIGHT: Music & Theme Controls */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}>
         {/* Music Control */}
         <TubeButton
           onClick={cycleVolume}
@@ -502,7 +510,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main
               style={{
                 paddingTop: 80,
-                paddingBottom: 80,
                 minHeight: '100vh',
               }}
             >
@@ -510,7 +517,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {children}
               </ErrorBoundary>
             </main>
-            <BottomNav />
 
             <Analytics />
             <SpeedInsights />

@@ -1,22 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState, useRef } from 'react'
-import { Play, Volume2, VolumeX } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Play } from 'lucide-react'
+import { useMusic } from '@/app/layout'
 
 export default function Hero() {
-  const [isMuted, setIsMuted] = useState(true)
+  const { volume } = useMusic()
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.muted = isMuted
+      videoRef.current.muted = volume === 'mute'
     }
-  }, [isMuted])
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted)
-  }
+  }, [volume])
 
   return (
     <section
@@ -40,7 +37,7 @@ export default function Hero() {
           ref={videoRef}
           autoPlay
           loop
-          muted={isMuted}
+          muted={volume === 'mute'}
           playsInline
           style={{
             width: '100%',
@@ -63,42 +60,6 @@ export default function Hero() {
           zIndex: 1,
         }}
       />
-
-      {/* Music Toggle Button */}
-      <button
-        onClick={toggleMute}
-        style={{
-          position: 'absolute',
-          top: 120,
-          right: 40,
-          zIndex: 3,
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
-          background: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(8px)',
-          border: '2px solid rgba(255, 255, 255, 0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          color: '#FFFFFF',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(225, 6, 0, 0.8)'
-          e.currentTarget.style.borderColor = '#E10600'
-          e.currentTarget.style.transform = 'scale(1.1)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'
-          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-          e.currentTarget.style.transform = 'scale(1)'
-        }}
-        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-      >
-        {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
-      </button>
 
       {/* Content */}
       <div
