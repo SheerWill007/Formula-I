@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { teamColour, formatLapTime } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -301,7 +302,7 @@ export default function RaceAnalysis({
         setUndercut(Array.isArray(uc) ? uc : [])
         setFastestLaps(Array.isArray(fl) ? fl : [])
       })
-      .catch(console.error)
+      .catch((err) => logger.fetchError('race analysis', err, { sessionKey }))
       .finally(() => setLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionKey, selected.join(',')])

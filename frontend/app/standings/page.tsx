@@ -1,6 +1,7 @@
 import React from 'react'
 import ChampionshipStandings from '@/components/home/ChampionshipStandings'
 import { Trophy, ShieldAlert } from 'lucide-react'
+import { logger } from '@/lib/logger'
 
 export const revalidate = 60
 
@@ -20,7 +21,7 @@ async function fetchStandings(year: number) {
     ])
     return { drivers: d.standings ?? [], constructors: c.standings ?? [], round: d.round ?? 0, error: null }
   } catch (err: any) {
-    console.error("Failed to fetch standings:", err)
+    logger.fetchError('standings', err, { year, endpoint: `${BASE}/api/v1/standings` })
     return { drivers: [], constructors: [], round: 0, error: err.message || "Failed to load standings" }
   }
 }

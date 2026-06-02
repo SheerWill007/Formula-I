@@ -6,13 +6,13 @@ import Hero from '@/components/home/Hero'
 
 export default function LandingPage() {
   return (
-    <div style={{ background: '#FAFAFA', overflowX: 'hidden', width: '100%' }}>
+    <div style={{ background: 'var(--bg-alt)', overflowX: 'hidden', width: '100%' }}>
 
       {/*  HERO SECTION ─────────────────────────────────────────────────── */}
       <Hero />
 
       {/* ── FEATURES SECTION ─────────────────────────────────────────────── */}
-      <section style={{ padding: '120px 5vw', width: '100%', background: '#F4F6F8', borderTop: '1px solid #E2E8F0' }}>
+      <section style={{ padding: '120px 5vw', width: '100%', background: 'var(--bg-deep)', borderTop: '1px solid var(--border)' }}>
 
         {/* Section header */}
         <div style={{ marginBottom: 64, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
@@ -22,7 +22,7 @@ export default function LandingPage() {
               fontWeight: 900,
               fontSize: 'clamp(2rem, 4vw, 2.8rem)',
               letterSpacing: '-0.04em',
-              color: '#0F172A',
+              color: 'var(--text)',
               lineHeight: 1.1,
               marginBottom: 16,
               textTransform: 'uppercase',
@@ -31,7 +31,7 @@ export default function LandingPage() {
             </h2>
             <p style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize: 16, color: '#64748B', lineHeight: 1.6,
+              fontSize: 16, color: 'var(--text-3)', lineHeight: 1.6,
             }}>
               Strip away the drag from your decision-making process with high-fidelity telemetry architecture.
             </p>
@@ -48,12 +48,12 @@ export default function LandingPage() {
           {/* TELEMETRY — large, spans 8 cols */}
           <div style={{
             gridColumn: 'span 8',
-            background: '#FAFAFA',
+            background: 'var(--surface)',
             borderRadius: 24,
             overflow: 'hidden',
             display: 'flex',
             minHeight: 460,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+            boxShadow: 'var(--shadow-md)',
           }}>
             <div style={{ padding: 48, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -63,7 +63,7 @@ export default function LandingPage() {
                   fontWeight: 800, letterSpacing: '0.12em', color: '#E8002D', textTransform: 'uppercase',
                 }}>Telemetry</span>
               </div>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: '#64748B', lineHeight: 1.6, maxWidth: 320, marginBottom: 24 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: 'var(--text-3)', lineHeight: 1.6, maxWidth: 320, marginBottom: 24 }}>
                 Distributed data streaming via Apache Kafka. Processed with sub-millisecond latency for instant technical insight from over 300 sensors.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -71,8 +71,8 @@ export default function LandingPage() {
                   <span key={t} style={{
                     fontFamily: 'Space Grotesk, sans-serif', fontSize: 10,
                     padding: '6px 12px', borderRadius: 4,
-                    background: '#F8FAFC', color: '#0F172A', fontWeight: 700,
-                    border: '1px solid #E2E8F0',
+                    background: 'var(--surface-2)', color: 'var(--text)', fontWeight: 700,
+                    border: '1px solid var(--border)',
                   }}>{t}</span>
                 ))}
               </div>
@@ -95,11 +95,11 @@ export default function LandingPage() {
           {/* STRATEGY — 4 cols */}
           <div style={{
             gridColumn: 'span 4',
-            background: '#FFFFFF',
+            background: 'var(--surface)',
             borderRadius: 24,
             padding: 48,
             display: 'flex', flexDirection: 'column',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+            boxShadow: 'var(--shadow-md)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <Zap size={18} color="#E8002D" />
@@ -108,7 +108,7 @@ export default function LandingPage() {
                 fontWeight: 800, letterSpacing: '0.12em', color: '#E8002D', textTransform: 'uppercase',
               }}>Strategy</span>
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: '#64748B', lineHeight: 1.6, marginBottom: 32 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: 'var(--text-3)', lineHeight: 1.6, marginBottom: 32 }}>
               Monte Carlo simulations running on TimescaleDB hypertables to provide optimal pit-stop windows and compound degradation models.
             </p>
             <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
@@ -121,11 +121,11 @@ export default function LandingPage() {
           {/* PREDICTIONS — 4 cols */}
           <div style={{
             gridColumn: 'span 4',
-            background: '#FFFFFF',
+            background: 'var(--surface)',
             borderRadius: 24,
             padding: 40,
             minHeight: 240,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+            boxShadow: 'var(--shadow-md)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <Brain size={18} color="#E8002D" />
@@ -134,7 +134,7 @@ export default function LandingPage() {
                 fontWeight: 800, letterSpacing: '0.12em', color: '#E8002D', textTransform: 'uppercase',
               }}>AutoML Inference</span>
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: '#64748B', lineHeight: 1.6 }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: 'var(--text-3)', lineHeight: 1.6 }}>
               Neural networks and FLAML ensembles trained on 70 years of race data to predict overtaking probability and engine fatigue with SHAP interpretability.
             </p>
           </div>
@@ -142,7 +142,7 @@ export default function LandingPage() {
           {/* GLOBAL SYNC — 8 cols, dark */}
           <div className="landing-global-sync" style={{
             gridColumn: 'span 8',
-            background: '#0F172A',
+            background: 'var(--surface-3)',
             borderRadius: 24,
             padding: 48,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -151,9 +151,9 @@ export default function LandingPage() {
             <div style={{ maxWidth: 400 }}>
               <h3 style={{
                 fontFamily: 'Inter, sans-serif', fontSize: 18, fontWeight: 800,
-                color: '#FFFFFF', marginBottom: 12, textTransform: 'uppercase',
+                color: 'var(--text)', marginBottom: 12, textTransform: 'uppercase',
               }}>Ingestion Pipeline</h3>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: '#94A3B8', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: 'var(--text-3)', lineHeight: 1.6 }}>
                 Automated data ingestion from FastF1, OpenF1, and Jolpica. Zero-config synchronization between the track and your local archive.
               </p>
             </div>
@@ -179,12 +179,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── COMMUNITY & CONTRIBUTION ─────────────────────────────────────────── */}
-      <section style={{ padding: '120px 5vw', textAlign: 'center', background: '#FFFFFF' }}>
+      <section style={{ padding: '120px 5vw', textAlign: 'center', background: 'var(--surface)' }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
           <h2 style={{
             fontFamily: 'Inter, sans-serif', fontWeight: 900,
             fontSize: 'clamp(2rem, 4vw, 3rem)',
-            letterSpacing: '-0.05em', color: '#0F172A',
+            letterSpacing: '-0.05em', color: 'var(--text)',
             lineHeight: 1.1, marginBottom: 24,
             textTransform: 'uppercase',
           }}>
@@ -192,7 +192,7 @@ export default function LandingPage() {
           </h2>
           <p style={{
             fontFamily: 'Inter, sans-serif', fontSize: 18,
-            color: '#64748B', lineHeight: 1.6, marginBottom: 48,
+            color: 'var(--text-3)', lineHeight: 1.6, marginBottom: 48,
             maxWidth: 600, margin: '0 auto 48px'
           }}>
             Formula 1 is 100% open-source. Join 1,200+ engineers and F1 fans building the future of accessible motorsport analytics.
@@ -215,8 +215,8 @@ export default function LandingPage() {
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer style={{
-        background: '#F4F6F8',
-        borderTop: '1px solid #E2E8F0',
+        background: 'var(--bg-deep)',
+        borderTop: '1px solid var(--border)',
         padding: '60px 5vw 40px',
         display: 'flex',
         flexDirection: 'column',
@@ -226,7 +226,7 @@ export default function LandingPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
             fontFamily: 'Inter, sans-serif', fontWeight: 900, fontSize: 18,
-            color: '#0F172A', letterSpacing: '-0.04em', textTransform: 'uppercase', fontStyle: 'italic',
+            color: 'var(--text)', letterSpacing: '-0.04em', textTransform: 'uppercase', fontStyle: 'italic',
           }}>
             Formula 1
           </span>
@@ -241,12 +241,12 @@ export default function LandingPage() {
             return (
               <Link key={l} href={href} target={l === 'GITHUB' ? '_blank' : undefined} style={{
                 fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700,
-                color: '#94A3B8', textDecoration: 'none', letterSpacing: '0.05em',
+                color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '0.05em',
               }}>{l}</Link>
             )
           })}
         </div>
-        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#CBD5E1', fontWeight: 500 }}>
+        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-4)', fontWeight: 500 }}>
           © 2026 FORMULA 1  · APACHE 2.0
         </div>
       </footer>

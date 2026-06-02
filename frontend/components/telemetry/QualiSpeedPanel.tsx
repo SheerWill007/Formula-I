@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { logger } from '@/lib/logger'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -558,7 +559,7 @@ export default function QualiSpeedPanel({ sessionKey }: { sessionKey: number }) 
         const keys = Object.keys(d.lap_progression)
         setSelectedDns(keys.slice(0, 2))
       })
-      .catch(console.error)
+      .catch((err) => logger.fetchError('quali speed data', err, { sessionKey }))
       .finally(() => setLoading(false))
   }, [sessionKey])
 

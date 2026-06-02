@@ -6,6 +6,7 @@ import { Calendar, ChevronDown, ChevronRight, Layers3, Radio, Flag, Clock3 } fro
 import { getSessionOverviewRoute } from '@/lib/session-routing'
 import { sessionTypeLabel } from '@/lib/utils'
 import type { Session } from '@/types/f1'
+import { logger } from '@/lib/logger'
 
 type SessionFilter = 'ALL' | 'FP1' | 'FP2' | 'FP3' | 'Q' | 'SQ' | 'R'
 
@@ -140,7 +141,7 @@ export default function SessionsPage() {
         setAllYears([...new Set(rows.map(s => s.year))].sort((a, b) => b - a))
       })
       .catch(err => {
-        console.error(err)
+        logger.fetchError('sessions', err, { endpoint: `${BASE}/api/v1/sessions` })
         setError(err.message || 'Failed to connect to the backend server. Please verify the Flask API is running.')
       })
       .finally(() => setLoading(false))

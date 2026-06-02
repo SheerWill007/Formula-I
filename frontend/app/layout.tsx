@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import BottomNav from '@/components/layout/BottomNav'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
@@ -109,16 +110,15 @@ function TubeNavBar() {
               boxShadow: '0 0 8px #E10600',
             }} 
           />
-          <span style={{
-            fontSize: 12,
-            fontWeight: 900,
-            color: dark ? '#F1F5F9' : '#0F172A',
-            letterSpacing: '0.08em',
-            fontFamily: 'Inter, sans-serif',
-            transition: 'color 0.3s',
-          }}>
-            F1
-          </span>
+          <img 
+            src="/favicon-32x32.png" 
+            alt="F1 Logo" 
+            style={{
+              width: 24,
+              height: 24,
+              objectFit: 'contain',
+            }}
+          />
         </Link>
 
         {/* Divider */}
@@ -506,7 +506,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 minHeight: '100vh',
               }}
             >
-              {children}
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
             </main>
             <BottomNav />
 

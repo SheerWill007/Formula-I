@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { teamColour, formatLapTime } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 import SectorCard from './SectorCard'
 import PerformanceMatrix from './PerformanceMatrix'
 
@@ -190,7 +191,7 @@ export default function PracticeAnalysis({
         const firstCmp = Object.keys(td ?? {})[0]
         if (firstCmp) setActiveDegCmp(firstCmp)
       })
-      .catch(console.error)
+      .catch((err) => logger.fetchError('practice analysis', err, { sessionKey }))
       .finally(() => setLoading(false))
   }, [sessionKey])
 

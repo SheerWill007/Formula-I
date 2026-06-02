@@ -224,9 +224,7 @@ def load_race_history(engine) -> pd.DataFrame:
     as training — total laps + cumulative time when live position unavailable.
     """
     with engine.connect() as conn:
-        rows = (
-            conn.execute(
-                text("""
+        rows = conn.execute(text("""
             WITH final_lap AS (
                 SELECT DISTINCT ON (l.driver_number, l.session_key)
                     l.session_key,
@@ -273,11 +271,7 @@ def load_race_history(engine) -> pd.DataFrame:
                 AND d.session_key  = tb.session_key
             WHERE s.session_type = 'R'
             ORDER BY s.date_start ASC
-        """)
-            )
-            .mappings()
-            .all()
-        )
+        """)).mappings().all()
 
     df = pd.DataFrame([dict(r) for r in rows])
     log.info(
@@ -303,9 +297,7 @@ def load_fp2_compound_usage(engine) -> pd.DataFrame:
     expected_columns = ["gp_name", "year", "team_name", "compound", "laps"]
 
     with engine.connect() as conn:
-        rows = (
-            conn.execute(
-                text("""
+        rows = conn.execute(text("""
             SELECT
                 s.gp_name,
                 s.year,
@@ -322,11 +314,7 @@ def load_fp2_compound_usage(engine) -> pd.DataFrame:
               AND l.lap_time_ms  IS NOT NULL
               AND l.deleted      = FALSE
             GROUP BY s.gp_name, s.year, d.team_name, l.compound
-        """)
-            )
-            .mappings()
-            .all()
-        )
+        """)).mappings().all()
 
     if not rows:
         return pd.DataFrame(columns=expected_columns)
@@ -578,8 +566,9 @@ def compute_fp1_long_run_signal(
     values if the session has no credible long-run work.
     """
     with engine.connect() as conn:
-        rows = conn.execute(
-            text("""
+        rows = (
+            conn.execute(
+                text("""
             WITH fp1 AS (
                 SELECT session_key
                 FROM sessions
@@ -623,8 +612,11 @@ def compute_fp1_long_run_signal(
                 AVG(deg_ms_lap) AS deg_rate_ms_lap
             FROM stints
         """),
-            {"team_name": team_name, "gp_name": gp_name, "year": year},
-        ).mappings().first()
+                {"team_name": team_name, "gp_name": gp_name, "year": year},
+            )
+            .mappings()
+            .first()
+        )
 
     if not rows or rows["long_run_pace_ms"] is None:
         return {"fp1_deg_rate_ms_lap": 0.0, "fp1_long_run_pace_ms": 0.0}
@@ -643,8 +635,9 @@ def compute_sprint_signal(
 ) -> dict:
     """Sprint result signal where available; neutral when the weekend has no sprint."""
     with engine.connect() as conn:
-        row = conn.execute(
-            text("""
+        row = (
+            conn.execute(
+                text("""
             WITH sprint_session AS (
                 SELECT session_key
                 FROM sessions
@@ -684,8 +677,11 @@ def compute_sprint_signal(
             FROM classified
             WHERE driver_number = :driver_number
         """),
-            {"driver_number": driver_number, "gp_name": gp_name, "year": year},
-        ).mappings().first()
+                {"driver_number": driver_number, "gp_name": gp_name, "year": year},
+            )
+            .mappings()
+            .first()
+        )
 
     if not row or row["sprint_finish_position"] is None:
         return {"sprint_finish_position": 10.0, "sprint_position_delta": 0.0}
@@ -712,8 +708,9 @@ def compute_weekend_inputs_used(engine, gp_name: str, year: int) -> dict:
         "Q": "qualifying",
     }
     with engine.connect() as conn:
-        rows = conn.execute(
-            text("""
+        rows = (
+            conn.execute(
+                text("""
             SELECT
                 session_type,
                 session_key,
@@ -727,11 +724,18 @@ def compute_weekend_inputs_used(engine, gp_name: str, year: int) -> dict:
             GROUP BY s.session_type, s.session_key
             ORDER BY date_start ASC NULLS LAST
         """),
-            {"gp_name": gp_name, "year": year},
-        ).mappings().all()
+                {"gp_name": gp_name, "year": year},
+            )
+            .mappings()
+            .all()
+        )
 
     status = {
-        "practice_long_run": {"available": False, "session_type": "FP1", "lap_count": 0},
+        "practice_long_run": {
+            "available": False,
+            "session_type": "FP1",
+            "lap_count": 0,
+        },
         "sprint_qualifying": {"available": False, "session_type": "SQ", "lap_count": 0},
         "sprint_race": {"available": False, "session_type": "S", "lap_count": 0},
         "qualifying": {"available": False, "session_type": "Q", "lap_count": 0},
@@ -779,9 +783,7 @@ def build_feature_matrix() -> pd.DataFrame:
 
     # Get all qualifying + race pairs
     with engine.connect() as conn:
-        pairs = (
-            conn.execute(
-                text("""
+        pairs = conn.execute(text("""
             SELECT
                 year,
                 gp_name,
@@ -794,11 +796,7 @@ def build_feature_matrix() -> pd.DataFrame:
                 MAX(CASE WHEN session_type = 'Q' THEN session_key END) IS NOT NULL AND
                 MAX(CASE WHEN session_type = 'R' THEN session_key END) IS NOT NULL
             ORDER BY date_start ASC
-        """)
-            )
-            .mappings()
-            .all()
-        )
+        """)).mappings().all()
 
     log.info("feature.pairs", count=len(pairs))
 
@@ -926,8 +924,14 @@ def _build_weekend_features(
     for sec in ["s1_ms", "s2_ms", "s3_ms"]:
         q[f"{sec}_rank"] = q[sec].rank(method="min", na_option="bottom").astype(int)
         q[f"{sec}_gap"] = (q[sec] - q[sec].min()).fillna(9999)
-    q["speed_st_rank"] = q["speed_st"].rank(method="min", ascending=False, na_option="bottom").astype(int)
-    fastest_speed_st = float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    q["speed_st_rank"] = (
+        q["speed_st"]
+        .rank(method="min", ascending=False, na_option="bottom")
+        .astype(int)
+    )
+    fastest_speed_st = (
+        float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    )
 
     # Circuit type flags
     is_street = int(gp_name in STREET_CIRCUITS)
@@ -1094,8 +1098,14 @@ def build_inference_features(quali_session_key: int) -> pd.DataFrame:
     for sec in ["s1_ms", "s2_ms", "s3_ms"]:
         q[f"{sec}_rank"] = q[sec].rank(method="min", na_option="bottom").astype(int)
         q[f"{sec}_gap"] = (q[sec] - q[sec].min()).fillna(9999)
-    q["speed_st_rank"] = q["speed_st"].rank(method="min", ascending=False, na_option="bottom").astype(int)
-    fastest_speed_st = float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    q["speed_st_rank"] = (
+        q["speed_st"]
+        .rank(method="min", ascending=False, na_option="bottom")
+        .astype(int)
+    )
+    fastest_speed_st = (
+        float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    )
 
     is_street = int(gp_name in STREET_CIRCUITS)
     is_power = int(gp_name in POWER_CIRCUITS)
