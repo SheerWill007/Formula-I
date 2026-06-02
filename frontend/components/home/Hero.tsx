@@ -1,37 +1,22 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { Play } from 'lucide-react'
-
-const HERO_IMAGES = [
-
-  //vids On Here!
-  
-  '/Picture1.jpg',
-  '/Picture2.jpg',
-  '/Picture3.jpg',
-  '/Picture4.jpg',
-  '/Picture5.jpg',
-  '/Picture6.jpg',
-]
+import { useEffect, useState, useRef } from 'react'
+import { Play, Volume2, VolumeX } from 'lucide-react'
 
 export default function Hero() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
+  const [isMuted, setIsMuted] = useState(true)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsAnimating(true)
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length)
-        setIsAnimating(false)
-      }, 1000)
-    }, 6000)
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted
+    }
+  }, [isMuted])
 
-    return () => clearInterval(interval)
-  }, [])
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
+  }
 
   return (
     <section
@@ -43,7 +28,7 @@ export default function Hero() {
         marginTop: -80, // Offset the layout padding to make it full-bleed
       }}
     >
-      {/* Image Slideshow */}
+      {/* Video Background */}
       <div
         style={{
           position: 'absolute',
@@ -51,31 +36,22 @@ export default function Hero() {
           zIndex: 0,
         }}
       >
-        {HERO_IMAGES.map((src, index) => (
-          <div
-            key={src}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: index === currentIndex ? 1 : 0,
-              transition: 'opacity 1s ease-in-out',
-              animation: index === currentIndex && !isAnimating ? 'kenBurns 10s ease-out forwards' : 'none',
-            }}
-          >
-            <Image
-              src={src}
-              alt={`F1 Racing ${index + 1}`}
-              fill
-              priority={index === 0}
-              sizes="100vw"
-              style={{
-                objectFit: 'cover',
-                objectPosition: 'center',
-              }}
-              quality={90}
-            />
-          </div>
-        ))}
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted={isMuted}
+          playsInline
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
+          }}
+        >
+          <source src="/LiveHero.webm" type="video/webm" />
+          Your browser does not support the video tag.
+        </video>
       </div>
 
       {/* Gradient Overlay */}
@@ -87,6 +63,42 @@ export default function Hero() {
           zIndex: 1,
         }}
       />
+
+      {/* Music Toggle Button */}
+      <button
+        onClick={toggleMute}
+        style={{
+          position: 'absolute',
+          top: 120,
+          right: 40,
+          zIndex: 3,
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(8px)',
+          border: '2px solid rgba(255, 255, 255, 0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          color: '#FFFFFF',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(225, 6, 0, 0.8)'
+          e.currentTarget.style.borderColor = '#E10600'
+          e.currentTarget.style.transform = 'scale(1.1)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)'
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+          e.currentTarget.style.transform = 'scale(1)'
+        }}
+        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+      >
+        {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+      </button>
 
       {/* Content */}
       <div
@@ -180,52 +192,11 @@ export default function Hero() {
           <Play size={20} fill="#FFFFFF" />
           Enter BoxUp
         </Link>
-
-        {/* Slideshow Indicators */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            marginTop: 48,
-          }}
-        >
-          {HERO_IMAGES.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setIsAnimating(true)
-                setTimeout(() => {
-                  setCurrentIndex(index)
-                  setIsAnimating(false)
-                }, 500)
-              }}
-              style={{
-                width: index === currentIndex ? 32 : 8,
-                height: 8,
-                background: index === currentIndex ? '#E10600' : 'rgba(255, 255, 255, 0.4)',
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
       </div>
 
-      {/* Ken Burns Animation */}
+      {/* Video Styles */}
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;700&display=swap');
-
-        @keyframes kenBurns {
-          0% {
-            transform: scale(1.06);
-          }
-          100% {
-            transform: scale(1.0);
-          }
-        }
 
         @media (max-width: 768px) {
           h1 {
