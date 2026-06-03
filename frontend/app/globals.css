@@ -85,14 +85,11 @@ body {
 }
 
 main {
-  padding-top: 72px;
-  padding-bottom: 96px;
   min-height: 100vh;
 }
 
 main.landing {
-  padding-top: 0;
-  padding-bottom: 0;
+  min-height: 100vh;
 }
 
 .layout-wrapper {
