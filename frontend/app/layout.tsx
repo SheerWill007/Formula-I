@@ -65,117 +65,127 @@ function TubeNavBar() {
       left: 0,
       right: 0,
       zIndex: 1000,
-      background: dark
-        ? 'rgba(0,0,0,0.3)'
-        : 'rgba(255,255,255,0.3)',
-      backdropFilter: 'blur(20px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-      borderBottom: dark
-        ? '1px solid rgba(16,185,129,0.15)'
-        : '1px solid rgba(15,23,42,0.10)',
+      pointerEvents: 'none',
     }}>
-      {/* LEFT: Logo */}
-      <Link href="/" style={{ 
-        textDecoration: 'none', 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 8,
-        padding: '6px 12px',
-        borderRadius: 8,
-        transition: 'background 0.2s',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = dark 
-          ? 'rgba(255,255,255,0.06)' 
-          : 'rgba(15,23,42,0.05)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent'
+      {/* Left Tube: Formula 1 Logo - TRANSPARENT */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        background: 'transparent',
+        border: 'none',
+        borderRadius: 999,
+        padding: '8px 16px',
+        transition: 'all 0.3s ease',
+        pointerEvents: 'auto',
       }}>
-        <span 
-          data-music-dot
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: '#E10600',
-            boxShadow: '0 0 8px #E10600',
-          }} 
-        />
-        <span style={{
-          fontFamily: 'Inter, sans-serif',
-          fontWeight: 900,
-          fontSize: 16,
-          color: dark ? '#F1F5F9' : '#0F172A',
-          letterSpacing: '-0.02em',
-          textTransform: 'uppercase',
-          fontStyle: 'italic',
+        <Link href="/" style={{ 
+          textDecoration: 'none', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 8,
+          padding: '4px 8px',
+          borderRadius: 999,
+          transition: 'background 0.2s',
         }}>
-          Formula 1
-        </span>
-      </Link>
+          <span 
+            data-music-dot
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: '#E10600',
+              boxShadow: '0 0 8px #E10600',
+            }} 
+          />
+          <span style={{
+            fontSize: 14,
+            fontWeight: 900,
+            color: dark ? '#F1F5F9' : '#0F172A',
+            letterSpacing: '-0.02em',
+            fontFamily: 'Inter, sans-serif',
+            textTransform: 'uppercase',
+            fontStyle: 'italic',
+          }}>
+            Formula 1
+          </span>
+        </Link>
+      </div>
 
-      {/* CENTER: Nav Items */}
+      {/* Center Tube: Nav Items */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 4,
         background: dark
-          ? 'rgba(0,0,0,0.4)'
-          : 'rgba(255,255,255,0.6)',
+          ? 'rgba(0,0,0,0.5)'
+          : 'rgba(255,255,255,0.5)',
         border: dark
-          ? '1px solid rgba(16,185,129,0.25)'
-          : '1px solid rgba(15,23,42,0.15)',
+          ? '1px solid rgba(16,185,129,0.2)'
+          : '1px solid rgba(15,23,42,0.1)',
         borderRadius: 999,
         padding: '8px 16px',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         boxShadow: dark
-          ? '0 4px 16px rgba(0,0,0,0.4)'
-          : '0 4px 16px rgba(15,23,42,0.08)',
+          ? '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(16,185,129,0.08)'
+          : '0 8px 32px rgba(15,23,42,0.1), inset 0 1px 0 rgba(255,255,255,0.6)',
+        transition: 'all 0.3s ease',
+        pointerEvents: 'auto',
       }}>
-        {navItems.map((item) => {
-          const isActive = item.active
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              style={{
-                fontSize: 11,
-                fontWeight: isActive ? 700 : 600,
-                color: isActive ? '#E10600' : dark ? '#94A3B8' : '#64748B',
-                textDecoration: 'none',
-                letterSpacing: '0.02em',
-                padding: '8px 16px',
-                borderRadius: 999,
-                background: isActive 
-                  ? 'rgba(225,6,0,0.12)' 
-                  : 'transparent',
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = dark 
-                    ? 'rgba(255,255,255,0.06)' 
-                    : 'rgba(15,23,42,0.05)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'transparent'
-                }
-              }}
-            >
-              {item.name}
-            </Link>
-          )
-        })}
+        {/* Nav Items */}
+        <div style={{ display: 'flex', gap: 2 }}>
+          {navItems.map((item) => {
+            const isActive = item.active
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                style={{
+                  fontSize: 11,
+                  fontWeight: isActive ? 700 : 600,
+                  color: isActive ? '#E10600' : dark ? '#94A3B8' : '#64748B',
+                  textDecoration: 'none',
+                  letterSpacing: '0.02em',
+                  padding: '8px 16px',
+                  borderRadius: 999,
+                  background: isActive 
+                    ? 'rgba(225,6,0,0.12)' 
+                    : 'transparent',
+                  transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = dark 
+                      ? 'rgba(255,255,255,0.06)' 
+                      : 'rgba(15,23,42,0.05)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent'
+                  }
+                }}
+              >
+                {item.name}
+              </Link>
+            )
+          })}
+        </div>
       </div>
 
-      {/* RIGHT: Music & Theme Controls */}
+      {/* Right Tube: Music & Theme Controls - TRANSPARENT */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: 6,
+        background: 'transparent',
+        border: 'none',
+        borderRadius: 999,
+        padding: '8px 12px',
+        transition: 'all 0.3s ease',
+        pointerEvents: 'auto',
       }}>
         {/* Music Control */}
         <TubeButton
@@ -184,35 +194,24 @@ function TubeNavBar() {
           dark={dark}
           title={`Volume: ${volume.toUpperCase()} - Click to cycle`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {volume === 'mute' ? (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <line x1="23" y1="9" x2="17" y2="15" />
-                  <line x1="17" y1="9" x2="23" y2="15" />
-                </svg>
-                <span style={{ fontSize: 10, fontWeight: 700 }}>MUTE</span>
-              </>
-            ) : volume === 'low' ? (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                </svg>
-                <span style={{ fontSize: 10, fontWeight: 700 }}>LOW</span>
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                </svg>
-                <span style={{ fontSize: 10, fontWeight: 700 }}>MAX</span>
-              </>
-            )}
-          </div>
+          {volume === 'mute' ? (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
+            </svg>
+          ) : volume === 'low' ? (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            </svg>
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+          )}
         </TubeButton>
 
         {/* Theme Control */}
