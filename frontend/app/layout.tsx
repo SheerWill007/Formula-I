@@ -102,15 +102,6 @@ function TubeNavBar() {
             boxShadow: '0 0 8px #E10600',
           }} 
         />
-        <img 
-          src="/favicon-32x32.png" 
-          alt="F1 Logo" 
-          style={{
-            width: 28,
-            height: 28,
-            objectFit: 'contain',
-          }}
-        />
         <span style={{
           fontFamily: 'Inter, sans-serif',
           fontWeight: 900,
