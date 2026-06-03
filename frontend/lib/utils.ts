@@ -15,10 +15,31 @@ export function formatGap(ms: number | null | undefined): string {
   return `+${(ms / 1000).toFixed(3)}s`
 }
 
-/** Ensure hex colour has # prefix */
-export function teamColour(colour: string | null | undefined): string {
-  if (!colour) return '#666666'
-  return colour.startsWith('#') ? colour : `#${colour}`
+const TEAM_COLOURS: Record<string, string> = {
+  'mercedes': '#27F4D2',
+  'red bull': '#3671C6',
+  'ferrari': '#E8002D',
+  'mclaren': '#FF8000',
+  'aston martin': '#229971',
+  'alpine': '#FF87BC',
+  'williams': '#64C4FF',
+  'haas': '#B6BABD',
+  'kick sauber': '#52E252',
+  'sauber': '#52E252',
+  'rb': '#6692FF',
+  'racing bulls': '#6692FF',
+}
+
+/** Ensure hex colour has # prefix, with optional team name fallback */
+export function teamColour(colour: string | null | undefined, teamName?: string | null): string {
+  if (colour) return colour.startsWith('#') ? colour : `#${colour}`
+  if (teamName) {
+    const lower = teamName.toLowerCase()
+    for (const [key, value] of Object.entries(TEAM_COLOURS)) {
+      if (lower.includes(key)) return value
+    }
+  }
+  return '#666666'
 }
 
 /** Tyre compound colours */
@@ -35,10 +56,6 @@ export const COMPOUND_LABEL: Record<string, string> = {
   SOFT: 'S', MEDIUM: 'M', HARD: 'H', INTER: 'I', INTERMEDIATE: 'I', WET: 'W',
 }
 
-/**
- * Circuit hero images — real city/track photography via Unsplash.
- * Matched by GP name substring so partial matches work.
- */
 const CIRCUIT_IMAGE_MAP: Array<[string, string]> = [
   ['Australian', 'https://images.unsplash.com/photo-1546412414-e1885259563a?w=1200&q=85'],
   ['Chinese', 'https://images.unsplash.com/photo-1537531383496-91af4b7ed77b?w=1200&q=85'],
