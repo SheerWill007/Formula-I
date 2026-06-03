@@ -19,8 +19,6 @@ export const revalidate = 60
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-// ── Data fetchers ─────────────────────────────────────────────────────────────
-
 async function fetchStandings(year: number) {
   try {
     const [d, c] = await Promise.all([
@@ -56,7 +54,6 @@ async function fetchDynamicFastestLap() {
     const sessions = await fetch('https://api.openf1.org/v1/sessions?year=2026&session_type=Race').then(r => r.json())
     if (!Array.isArray(sessions)) return { lap: null, gp: '---' }
 
-    // Find last finished race
     const lastRace = sessions.filter(s => s.date_end < now && !s.is_cancelled).slice(-1)[0]
     if (!lastRace) return { lap: null, gp: '---' }
 
@@ -90,8 +87,6 @@ async function fetchSessionWeather(sessionKey: number | string | undefined) {
     return Array.isArray(data) && data.length > 0 ? data[data.length - 1] : null
   } catch { return null }
 }
-
-// ── Dashboard Page ────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
   const currentYear = new Date().getFullYear()
@@ -275,8 +270,6 @@ export default async function DashboardPage() {
         <ChampionshipStandings
           drivers={standings.drivers}
           constructors={standings.constructors}
-          currentYear={currentYear}
-          round={standings.round}
           images={driverImages}
         />
       </div>
@@ -284,8 +277,6 @@ export default async function DashboardPage() {
     </div>
   )
 }
-
-// ── Shared Sub-components ─────────────────────────────────────────────────────
 
 function ConditionCard({ icon: Icon, label, value, color }: { icon: React.ElementType, label: string, value: string, color: string }) {
   return (
