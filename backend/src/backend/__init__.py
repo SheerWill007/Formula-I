@@ -68,6 +68,11 @@ def create_app() -> Flask:
     )
     extensions.set_engine(db_engine)
 
+    # Register centralized error handlers
+    from backend.error_handlers import register_error_handlers
+    register_error_handlers(app)
+
+    # Register blueprints - original routes
     from backend.api.v1.sessions import sessions_bp
     from backend.api.v1.laps import laps_bp
     from backend.api.v1.drivers import drivers_bp
@@ -78,6 +83,9 @@ def create_app() -> Flask:
     from backend.api.v1.schedule import schedule_bp
     from backend.health import health_bp
 
+    # Register refactored routes (v2)
+    from backend.api.v1.sessions_v2 import sessions_v2_bp
+
     app.register_blueprint(health_bp)
     app.register_blueprint(sessions_bp, url_prefix="/api/v1")
     app.register_blueprint(laps_bp, url_prefix="/api/v1")
@@ -87,19 +95,13 @@ def create_app() -> Flask:
     app.register_blueprint(analysis_bp, url_prefix="/api/v1")
     app.register_blueprint(predictions_bp, url_prefix="/api/v1")
     app.register_blueprint(schedule_bp, url_prefix="/api/v1")
-
-    @app.errorhandler(404)
-    def not_found(e):
-        return {"error": "Not found", "code": 404}, 404
-
-    @app.errorhandler(500)
-    def server_error(e):
-        log.exception("unhandled_exception", error=str(e))
-        return {"error": "Internal server error", "code": 500}, 500
+    
+    # Refactored routes with _v2 suffix for testing
+    app.register_blueprint(sessions_v2_bp, url_prefix="/api/v2")
 
     # Use app.debug as single source of truth for scheduler decision
     if settings.auto_ingest_enabled and not settings.testing and not app.debug:
         _start_auto_ingest_scheduler()
 
-    log.info("app.created", debug=app.debug)
+    log.info("app.created", debug=app.debug, architecture="layered")
     return app

@@ -2883,3 +2883,4 @@ def quali_speed(session_key: int):
         "lap_progression": lap_progression,
         "insights":        insights,
     })
+
