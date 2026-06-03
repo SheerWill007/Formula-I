@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError, OperationalError
+import requests
 from backend.extensions import get_engine
 
 sessions_bp = Blueprint("sessions", __name__)

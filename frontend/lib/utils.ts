@@ -16,8 +16,7 @@ export function formatGap(ms: number | null | undefined): string {
 }
 
 /** Ensure hex colour has # prefix */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function teamColour(colour: string | null | undefined, teamName?: string | null): string {
+export function teamColour(colour: string | null | undefined): string {
   if (!colour) return '#666666'
   return colour.startsWith('#') ? colour : `#${colour}`
 }

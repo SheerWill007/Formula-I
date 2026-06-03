@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Flask
-    secret_key: str = "dev-secret-change-in-production"
+    secret_key: str = ""  # Must be set via environment variable in production
     debug: bool = False
     testing: bool = False
 
@@ -45,6 +45,19 @@ class Settings(BaseSettings):
         elif url.startswith("postgresql://") and "+psycopg" not in url:
             url = url.replace("postgresql://", "postgresql+psycopg://", 1)
         return url
+
+    def validate_secret_key(self) -> None:
+        """
+        Validate that secret_key is set in production environments.
+        Call this during app initialization.
+        """
+        # Only enforce in production (not debug/testing)
+        if not self.debug and not self.testing:
+            if not self.secret_key or self.secret_key == "":
+                raise ValueError(
+                    "SECRET_KEY must be set in production environment. "
+                    "Set the SECRET_KEY environment variable."
+                )
 
 
 settings = Settings()

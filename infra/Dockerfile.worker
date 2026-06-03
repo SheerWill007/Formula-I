@@ -1,9 +1,8 @@
 FROM python:3.11-slim
 
 WORKDIR /app
-COPY pyproject.toml .
-COPY uv.lock .
-COPY apps/ apps/
+COPY backend/pyproject.toml .
+COPY backend/uv.lock .
 COPY packages/ packages/
 
 RUN pip install uv && uv sync --frozen --no-dev

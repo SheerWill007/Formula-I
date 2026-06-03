@@ -52,37 +52,37 @@ export const api = {
         `/api/v1/sessions/${key}/drivers/compare?drivers=${drivers.join(',')}`
       ),
   },
+  strategy: {
+    stints: (key: number) => get<import('@/types/f1').Stint[]>(`/api/v1/sessions/${key}/strategy`),
+    raceOrder: (key: number) => get<import('@/types/f1').RacePosition[]>(`/api/v1/sessions/${key}/race-order`),
+  },
+  telemetry: {
+    driver: (key: number, num: number) =>
+      get<{ driver_number: number; lap_number: number; samples: import('@/types/f1').TelemetrySample[] }>(
+        `/api/v1/sessions/${key}/telemetry/${num}`
+      ),
+    compare: (key: number, drivers: number[]) =>
+      get<Record<string, { lap_number: number; samples: import('@/types/f1').TelemetrySample[] }>>(
+        `/api/v1/sessions/${key}/telemetry/compare?drivers=${drivers.join(',')}`
+      ),
+    stats: (key: number, drivers?: number[]) => {
+      const q = drivers?.length ? `?drivers=${drivers.join(',')}` : ''
+      return get<import('@/types/f1').DriverTelemetryStats[]>(
+        `/api/v1/sessions/${key}/telemetry/stats${q}`
+      )
+    },
+  },
+  predictions: {
+    predict: (qualiKey: number) =>
+      get<import('@/types/f1').PredictionResponse>(
+        `/api/v1/sessions/${qualiKey}/predict`
+      ),
+  },
 }
 
 export { APIError }
 
-// Add these inside the api object — paste after drivers block:
-export const strategyApi = {
-  stints: (key: number) => get<import('@/types/f1').Stint[]>(`/api/v1/sessions/${key}/strategy`),
-  raceOrder: (key: number) => get<import('@/types/f1').RacePosition[]>(`/api/v1/sessions/${key}/race-order`),
-}
-
-export const telemetryApi = {
-  driver: (key: number, num: number) =>
-    get<{ driver_number: number; lap_number: number; samples: import('@/types/f1').TelemetrySample[] }>(
-      `/api/v1/sessions/${key}/telemetry/${num}`
-    ),
-  compare: (key: number, drivers: number[]) =>
-    get<Record<string, { lap_number: number; samples: import('@/types/f1').TelemetrySample[] }>>(
-      `/api/v1/sessions/${key}/telemetry/compare?drivers=${drivers.join(',')}`
-    ),
-  stats: (key: number, drivers?: number[]) => {
-    const q = drivers?.length ? `?drivers=${drivers.join(',')}` : ''
-    return get<import('@/types/f1').DriverTelemetryStats[]>(
-      `/api/v1/sessions/${key}/telemetry/stats${q}`
-    )
-  },
-
-}
-
-export const predictionsApi = {
-  predict: (qualiKey: number) =>
-    get<import('@/types/f1').PredictionResponse>(
-      `/api/v1/sessions/${qualiKey}/predict`
-    ),
-}
+// Legacy exports for backwards compatibility
+export const strategyApi = api.strategy
+export const telemetryApi = api.telemetry
+export const predictionsApi = api.predictions

@@ -98,7 +98,69 @@ class LapTimeRepository(BaseRepository[LapTime]):
         return result.scalar() or 0
 
     def get_long_runs(self, session_key: int, min_laps: int = 5) -> List[dict]:
-        """Get stints with at least min_laps consecutive laps."""
-        # This would require more complex logic - placeholder for now
-        # In a real implementation, you'd analyze consecutive laps per driver
-        return []
+        """Get stints (consecutive runs) with at least min_laps for each driver.
+        
+        Returns a list of stints, each containing driver_number, lap_start, lap_end,
+        lap_count, start_time, end_time, and average_pace.
+        """
+        from sqlalchemy import func, desc
+        
+        # Get all laps for this session, ordered by driver and lap number
+        stmt = (
+            select(
+                LapTime.driver_number,
+                LapTime.lap_number,
+                LapTime.lap_time_ms,
+                LapTime.date_start
+            )
+            .where(LapTime.session_key == session_key)
+            .order_by(LapTime.driver_number, LapTime.lap_number)
+        )
+        result = self.db.execute(stmt)
+        laps = result.all()
+        
+        if not laps:
+            return []
+        
+        # Group consecutive laps by driver into stints
+        stints = []
+        current_stint = None
+        
+        for lap in laps:
+            driver_num, lap_num, lap_time, date_start = lap
+            
+            # Start new stint if first lap or driver changed
+            if current_stint is None or current_stint['driver_number'] != driver_num:
+                if current_stint and current_stint['lap_count'] >= min_laps:
+                    stints.append(current_stint)
+                current_stint = {
+                    'driver_number': driver_num,
+                    'lap_start': lap_num,
+                    'lap_end': lap_num,
+                    'lap_count': 1,
+                    'total_time_ms': lap_time or 0,
+                    'date_start': date_start,
+                }
+            # Continue current stint if consecutive lap
+            elif lap_num == current_stint['lap_end'] + 1 and lap_time is not None:
+                current_stint['lap_end'] = lap_num
+                current_stint['lap_count'] += 1
+                current_stint['total_time_ms'] += lap_time
+            # Gap detected - save stint and start new one
+            else:
+                if current_stint['lap_count'] >= min_laps:
+                    stints.append(current_stint)
+                current_stint = {
+                    'driver_number': driver_num,
+                    'lap_start': lap_num,
+                    'lap_end': lap_num,
+                    'lap_count': 1,
+                    'total_time_ms': lap_time or 0,
+                    'date_start': date_start,
+                }
+        
+        # Add final stint if it meets minimum
+        if current_stint and current_stint['lap_count'] >= min_laps:
+            stints.append(current_stint)
+        
+        return stints

@@ -35,7 +35,7 @@ def upgrade() -> None:
             created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
             CONSTRAINT sessions_session_type_check
-                CHECK (session_type IN ('R', 'Q', 'FP1', 'FP2', 'FP3', 'SS', 'SQ'))
+                CHECK (session_type IN ('R', 'Q', 'FP1', 'FP2', 'FP3', 'S', 'SQ'))
         );
     """)
 

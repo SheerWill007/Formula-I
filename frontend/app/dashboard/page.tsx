@@ -11,6 +11,7 @@ import {
   Zap,
   Flag
 } from 'lucide-react'
+import { formatLapTime } from '@/lib/utils'
 import CountdownTimer from '@/components/schedule/CountdownTimer'
 import ChampionshipStandings from '@/components/home/ChampionshipStandings'
 
@@ -88,12 +89,6 @@ async function fetchSessionWeather(sessionKey: number | string | undefined) {
     const data = await fetch(`https://api.openf1.org/v1/weather?session_key=${sessionKey}`).then(r => r.json())
     return Array.isArray(data) && data.length > 0 ? data[data.length - 1] : null
   } catch { return null }
-}
-
-function formatLapTime(ms: number) {
-  const mins = Math.floor(ms / 60000)
-  const secs = ((ms % 60000) / 1000).toFixed(3)
-  return `${mins}:${secs.padStart(6, '0')}`
 }
 
 // ── Dashboard Page ────────────────────────────────────────────────────────────

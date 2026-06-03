@@ -3,6 +3,7 @@ Sessions API routes - refactored version using service/repository pattern.
 """
 from flask import Blueprint, jsonify, request
 import structlog
+import requests
 
 from backend.database import get_db
 from backend.services.session_service import SessionService

@@ -37,7 +37,6 @@ def _get_official_corners(session_key: int) -> list | None:
         return _corner_cache[session_key]
 
     try:
-        from backend.extensions import get_engine
         engine = get_engine()
         
         with engine.connect() as conn:
@@ -222,6 +221,7 @@ def stint_pace(session_key: int):
 
     Returns list of stint summaries ordered by driver finishing position.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -320,6 +320,7 @@ def position_changes(session_key: int):
         { total_laps: int,
           drivers: { "63": { abbreviation, team_colour, positions: [1,1,2,...] } } }
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -395,6 +396,7 @@ def long_runs(session_key: int):
     """
     min_laps = request.args.get("min_laps", 5, type=int)
 
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -488,6 +490,7 @@ def tyre_degradation(session_key: int):
 
     Also returns a per-compound average across all drivers for comparison.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         # Per driver per stint
         per_driver = (
@@ -625,6 +628,7 @@ def sector_stints(session_key: int):
     Best sector times per driver per stint.
     Shows where each driver gains/loses time in different race phases.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -690,6 +694,7 @@ def gap_to_leader(session_key: int):
     Returns:
         { total_laps, drivers: { "63": { abbreviation, team_colour, gaps: { "1": 0.0, "2": 1.2, ... } } } }
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -797,6 +802,7 @@ def undercut_analysis(session_key: int):
 
     Returns list of pit stop events ordered by lap number.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         pit_rows = (
             conn.execute(
@@ -908,6 +914,7 @@ def fastest_lap(session_key: int):
 
     Returns ordered list (fastest first) with gap to fastest.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -975,6 +982,7 @@ def fp_scatter(session_key: int):
     Used for scatter plot. Includes outlaps/inlaps flagged so frontend
     can show/hide them. No reconstruction from averages — raw lap data.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -1041,6 +1049,7 @@ def fp_compounds(session_key: int):
     Per team: how many laps on each compound, and which drivers ran what.
     Reveals planned race strategy before anyone announces it.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(
@@ -1142,6 +1151,7 @@ def fp_racesim(session_key: int):
     Returns stints with per-lap data so frontend can plot the actual
     lap time trace — this is the key Friday evening intelligence.
     """
+    engine = get_engine()
     with engine.connect() as conn:
         rows = (
             conn.execute(

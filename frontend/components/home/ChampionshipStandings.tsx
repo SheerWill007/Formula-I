@@ -45,12 +45,10 @@ function constructorColour(name: string): string {
 export default function ChampionshipStandings({
   drivers,
   constructors,
-  images = {}
+  images = {},
 }: {
   drivers: DriverStanding[]
   constructors: ConstructorStanding[]
-  currentYear: number
-  round: number
   images?: Record<string, string>
 }) {
   const [activeTab, setActiveTab] = useState<'drivers' | 'constructors'>('drivers')

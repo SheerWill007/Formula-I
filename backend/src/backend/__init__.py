@@ -21,7 +21,15 @@ def _start_auto_ingest_scheduler() -> None:
     interval_seconds = max(settings.auto_ingest_interval_minutes, 15) * 60
 
     def runner() -> None:
-        from ingestion.auto_ingest import run_once
+        # Import ingestion package with error handling
+        try:
+            from ingestion.auto_ingest import run_once
+        except ImportError:
+            log.error(
+                "auto_ingest.import_failed",
+                error="ingestion package not found - ensure it's installed or disable auto_ingest"
+            )
+            return
 
         if settings.auto_ingest_on_startup:
             try:
