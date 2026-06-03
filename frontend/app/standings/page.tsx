@@ -20,9 +20,10 @@ async function fetchStandings(year: number) {
       }),
     ])
     return { drivers: d.standings ?? [], constructors: c.standings ?? [], round: d.round ?? 0, error: null }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to load standings"
     logger.fetchError('standings', err, { year, endpoint: `${BASE}/api/v1/standings` })
-    return { drivers: [], constructors: [], round: 0, error: err.message || "Failed to load standings" }
+    return { drivers: [], constructors: [], round: 0, error: message }
   }
 }
 
@@ -54,7 +55,7 @@ export default async function StandingsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1080px', margin: '0 auto', padding: '0 24px 48px' }}>
-      
+
       {/* Header Section */}
       <section style={{
         padding: '32px',
@@ -133,8 +134,6 @@ export default async function StandingsPage() {
           <ChampionshipStandings
             drivers={standings.drivers}
             constructors={standings.constructors}
-            currentYear={currentYear}
-            round={standings.round}
             images={driverImages}
           />
         </div>

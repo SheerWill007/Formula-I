@@ -35,8 +35,8 @@ async function fetchLatestPredictions(): Promise<{ data: PredictionResponse | nu
     }
     const data = await res.json()
     return { data, error: null }
-  } catch (err: any) {
-    return { data: null, error: err.message || "Failed to reach ML API" }
+  } catch (err: unknown) {
+    return { data: null, error: err instanceof Error ? err.message : "Failed to reach ML API" }
   }
 }
 
@@ -45,7 +45,7 @@ export default async function PredictionsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '1080px', margin: '0 auto', padding: '0 24px 48px' }}>
-      
+
       {/* Header Section */}
       <section style={{
         padding: '32px',
@@ -103,7 +103,7 @@ export default async function PredictionsPage() {
       {!data ? (
         /* Standby / Training Required State */
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
-          
+
           <div style={{
             background: '#FFFFFF',
             borderRadius: '28px',
@@ -121,7 +121,7 @@ export default async function PredictionsPage() {
               <div>
                 <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>ML Pipeline Status: Standby</h3>
                 <p style={{ margin: 0, color: '#64748B', fontSize: '13px', fontFamily: 'JetBrains Mono, monospace' }}>
-                  {error && error.includes("ML package not available") 
+                  {error && error.includes("ML package not available")
                     ? "ML python packages are missing or environment is incomplete."
                     : "No trained model matching current season telemetry is loaded."}
                 </p>
@@ -180,7 +180,7 @@ export default async function PredictionsPage() {
       ) : (
         /* Predictions Display Card */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
           {/* Model info banner */}
           <div style={{
             display: 'grid',
