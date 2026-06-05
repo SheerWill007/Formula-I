@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: boxup-api
+    runtime: python
+    pythonVersion: "3.10"
+    buildCommand: "pip install -r requirements.txt && cd backend && alembic upgrade head"
+    startCommand: "cd backend && gunicorn --bind 0.0.0.0:$PORT main:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: boxup
+          property: connectionString
+      - key: DEBUG
+        value: "false"
+      - key: AUTO_INGEST_ENABLED
+        value: "true"
+      - key: AUTO_INGEST_ON_STARTUP
+        value: "false"
+      - key: AUTO_INGEST_INTERVAL_MINUTES
+        value: "60"
+    disk:
+      name: instance
+      mountPath: /opt/render/project/instance
+      sizeGB: 1
+
+databases:
+  - name: boxup
+    databaseName: boxup
+    user: boxup
+    region: oregon
+    plan: starter
+    postgresMajorVersion: "15"
