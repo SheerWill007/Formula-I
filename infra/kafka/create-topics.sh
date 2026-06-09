@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Slipstream — Kafka Topic Initialisation
+# Boxup — Kafka Topic Initialisation
 # =============================================================================
 # Run this once after Kafka starts to create all required topics.
 # Safe to run multiple times (--if-not-exists flag).
