@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Boxup — Kafka Topic Initialisation
+# Slipstream — Kafka Topic Initialisation
 # =============================================================================
 # Run this once after Kafka starts to create all required topics.
 # Safe to run multiple times (--if-not-exists flag).
@@ -15,7 +15,7 @@ set -e  # exit immediately if any command fails
 
 BOOTSTRAP="localhost:9092"
 RETENTION_MS=604800000   # 7 days in milliseconds
-CONTAINER="boxup-kafka"
+CONTAINER="pitwall-kafka"
 
 echo ""
 echo "Creating Slipstream Kafka topics..."

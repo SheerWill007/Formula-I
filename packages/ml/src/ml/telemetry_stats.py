@@ -11,7 +11,9 @@ Usage:
 
 from __future__ import annotations
 import argparse
+import gzip
 import json
+from pathlib import Path
 from typing import Optional
 import numpy as np
 from sqlalchemy import create_engine, text
@@ -22,7 +24,78 @@ log = structlog.get_logger()
 
 
 def get_engine():
-    return create_engine(settings.database_url)
+    return create_engine(settings.db_url)
+
+
+def _load_artifact_samples(storage_key: str, fmt: str) -> list[dict]:
+    if fmt != "json.gz":
+        return []
+
+    path = Path(settings.telemetry_artifact_dir) / storage_key
+    if not path.exists():
+        return []
+
+    with gzip.open(path, "rb") as f:
+        payload = json.loads(f.read().decode("utf-8"))
+
+    samples = payload.get("samples", [])
+    return samples if isinstance(samples, list) else []
+
+
+def _get_telemetry_samples(
+    conn,
+    session_key: int,
+    driver_number: int,
+    lap_number: int,
+) -> list[dict]:
+    rows = (
+        conn.execute(
+            text("""
+                SELECT distance_m, speed_kmh, brake, gear,
+                       throttle_pct, rpm, drs
+                FROM telemetry
+                WHERE session_key   = :sk
+                  AND driver_number = :dn
+                  AND lap_number    = :ln
+                ORDER BY distance_m ASC NULLS LAST, sample_order
+            """),
+            {"sk": session_key, "dn": driver_number, "ln": lap_number},
+        )
+        .mappings()
+        .all()
+    )
+
+    if rows:
+        return [dict(r) for r in rows]
+
+    artifact = (
+        conn.execute(
+            text("""
+                SELECT storage_key, storage_backend, format
+                FROM telemetry_artifacts
+                WHERE session_key   = :sk
+                  AND driver_number = :dn
+                  AND lap_number    = :ln
+                LIMIT 1
+            """),
+            {"sk": session_key, "dn": driver_number, "ln": lap_number},
+        )
+        .mappings()
+        .first()
+    )
+
+    if not artifact or artifact["storage_backend"] != "local":
+        return []
+
+    samples = _load_artifact_samples(artifact["storage_key"], artifact["format"])
+    samples.sort(
+        key=lambda s: (
+            s.get("distance_m") is None,
+            s.get("distance_m") if s.get("distance_m") is not None else 0,
+            s.get("sample_order") or 0,
+        )
+    )
+    return samples
 
 
 # ── Corner detection ──────────────────────────────────────────────────────────
@@ -181,8 +254,10 @@ def compute_stats_for_session(session_key: int) -> int:
     rows_written = 0
 
     with engine.connect() as conn:
-        # Get all driver/lap combos with enough telemetry samples
-        driver_laps = (
+        # Get all driver/lap combos with enough telemetry samples. The first
+        # query covers legacy DB-backed telemetry; the second covers cheap
+        # artifact-backed telemetry.
+        db_driver_laps = (
             conn.execute(
                 text("""
             SELECT driver_number, lap_number, COUNT(*) as samples
@@ -197,6 +272,30 @@ def compute_stats_for_session(session_key: int) -> int:
             .mappings()
             .all()
         )
+        artifact_driver_laps = (
+            conn.execute(
+                text("""
+            SELECT driver_number, lap_number, sample_count AS samples
+            FROM telemetry_artifacts
+            WHERE session_key = :sk
+              AND sample_count >= 50
+            ORDER BY driver_number, lap_number
+        """),
+                {"sk": session_key},
+            )
+            .mappings()
+            .all()
+        )
+
+        driver_laps_by_key = {
+            (row["driver_number"], row["lap_number"]): dict(row)
+            for row in artifact_driver_laps
+        }
+        driver_laps_by_key.update({
+            (row["driver_number"], row["lap_number"]): dict(row)
+            for row in db_driver_laps
+        })
+        driver_laps = list(driver_laps_by_key.values())
 
         if not driver_laps:
             log.warning("stats.no_telemetry", session_key=session_key)
@@ -212,22 +311,7 @@ def compute_stats_for_session(session_key: int) -> int:
             dn = dl["driver_number"]
             ln = dl["lap_number"]
 
-            rows = (
-                conn.execute(
-                    text("""
-                SELECT distance_m, speed_kmh, brake, gear,
-                       throttle_pct, rpm, drs
-                FROM telemetry
-                WHERE session_key   = :sk
-                  AND driver_number = :dn
-                  AND lap_number    = :ln
-                ORDER BY distance_m ASC NULLS LAST, sample_order
-            """),
-                    {"sk": session_key, "dn": dn, "ln": ln},
-                )
-                .mappings()
-                .all()
-            )
+            rows = _get_telemetry_samples(conn, session_key, dn, ln)
 
             if not rows:
                 continue
@@ -335,6 +419,8 @@ def main():
                 conn.execute(
                     text("""
                 SELECT DISTINCT session_key FROM telemetry
+                UNION
+                SELECT DISTINCT session_key FROM telemetry_artifacts
                 ORDER BY session_key
             """)
                 )

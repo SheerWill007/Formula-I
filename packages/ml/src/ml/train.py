@@ -207,6 +207,17 @@ def main():
     log.info("train.start")
 
     df = build_feature_matrix()
+    if df.empty or TARGET_COL not in df.columns:
+        log.error(
+            "train.no_training_rows",
+            message="No Q+R weekend rows found. Ingest at least one qualifying and race session for the same year/gp.",
+        )
+        print("\nNo training rows found.")
+        print("Ingest Q + R pairs first, for example:")
+        print('  uv run python -m ingestion.ingest_session --year 2024 --gp "British" --session Q --skip-telemetry')
+        print('  uv run python -m ingestion.ingest_session --year 2024 --gp "British" --session R --skip-telemetry')
+        return
+
     log.info("train.data",
              rows=len(df),
              years=sorted(int(y) for y in df['year'].unique()),

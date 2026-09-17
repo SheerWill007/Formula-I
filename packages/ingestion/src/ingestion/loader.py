@@ -5,7 +5,9 @@ All inputs are plain dicts from fastf1_client (raw FastF1 values).
 This module handles all type conversion: Timedeltas to ms, NaN to None, etc.
 """
 from __future__ import annotations
+import hashlib
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 from sqlalchemy import create_engine, text
 from ingestion.config import settings
@@ -196,56 +198,58 @@ def load_laps(laps: list[dict], session_key: int) -> int:
         return 0
     now = datetime.now(timezone.utc)
     engine = _get_engine()
+    rows = []
+    for lap in laps:
+        rows.append({
+            'session_key':      session_key,
+            'driver_number':    _clean_int(lap.get('driver_number')),
+            'lap_number':       _clean_int(lap.get('lap_number')),
+            'lap_time_ms':      _td_to_ms(lap.get('lap_time_ms')),
+            's1_ms':            _td_to_ms(lap.get('s1_ms')),
+            's2_ms':            _td_to_ms(lap.get('s2_ms')),
+            's3_ms':            _td_to_ms(lap.get('s3_ms')),
+            'compound':         _clean_str(lap.get('compound')),
+            'tyre_life_laps':   _clean_int(lap.get('tyre_life_laps')),
+            'is_personal_best': _clean_bool(lap.get('is_personal_best')),
+            'track_status':     _clean_str(lap.get('track_status')),
+            'position':         _clean_int(lap.get('position')),
+            'quali_segment':    _clean_int(lap.get('quali_segment')),
+            'deleted':          _clean_bool(lap.get('deleted')),
+            'recorded_at':      now,
+            # Speed trap measurements — from FastF1 SpeedI1/I2/FL/ST
+            # These are km/h readings at official FIA timing lines:
+            # speed_i1 = intermediate 1 (end of S1 straight)
+            # speed_i2 = intermediate 2 (mid-lap straight)
+            # speed_fl = finish line speed (exit of final corner)
+            # speed_st = official speed trap (fastest point on circuit)
+            'speed_i1':         _clean_float(lap.get('speed_i1')),
+            'speed_i2':         _clean_float(lap.get('speed_i2')),
+            'speed_fl':         _clean_float(lap.get('speed_fl')),
+            'speed_st':         _clean_float(lap.get('speed_st')),
+        })
+
     with engine.begin() as conn:
         conn.execute(
             text("DELETE FROM lap_times WHERE session_key = :sk"),
             {"sk": session_key}
         )
-        for lap in laps:
-            row = {
-                'session_key':      session_key,
-                'driver_number':    _clean_int(lap.get('driver_number')),
-                'lap_number':       _clean_int(lap.get('lap_number')),
-                'lap_time_ms':      _td_to_ms(lap.get('lap_time_ms')),
-                's1_ms':            _td_to_ms(lap.get('s1_ms')),
-                's2_ms':            _td_to_ms(lap.get('s2_ms')),
-                's3_ms':            _td_to_ms(lap.get('s3_ms')),
-                'compound':         _clean_str(lap.get('compound')),
-                'tyre_life_laps':   _clean_int(lap.get('tyre_life_laps')),
-                'is_personal_best': _clean_bool(lap.get('is_personal_best')),
-                'track_status':     _clean_str(lap.get('track_status')),
-                'position':         _clean_int(lap.get('position')),
-                'quali_segment':    _clean_int(lap.get('quali_segment')),
-                'deleted':          _clean_bool(lap.get('deleted')),
-                'recorded_at':      now,
-                # Speed trap measurements — from FastF1 SpeedI1/I2/FL/ST
-                # These are km/h readings at official FIA timing lines:
-                # speed_i1 = intermediate 1 (end of S1 straight)
-                # speed_i2 = intermediate 2 (mid-lap straight)
-                # speed_fl = finish line speed (exit of final corner)
-                # speed_st = official speed trap (fastest point on circuit)
-                'speed_i1':         _clean_float(lap.get('speed_i1')),
-                'speed_i2':         _clean_float(lap.get('speed_i2')),
-                'speed_fl':         _clean_float(lap.get('speed_fl')),
-                'speed_st':         _clean_float(lap.get('speed_st')),
-            }
-            conn.execute(text("""
-                INSERT INTO lap_times (
-                    session_key, driver_number, lap_number,
-                    lap_time_ms, s1_ms, s2_ms, s3_ms,
-                    compound, tyre_life_laps,
-                    is_personal_best, track_status, position, quali_segment, deleted,
-                    recorded_at,
-                    speed_i1, speed_i2, speed_fl, speed_st
-                ) VALUES (
-                    :session_key, :driver_number, :lap_number,
-                    :lap_time_ms, :s1_ms, :s2_ms, :s3_ms,
-                    :compound, :tyre_life_laps,
-                    :is_personal_best, :track_status, :position, :quali_segment, :deleted,
-                    :recorded_at,
-                    :speed_i1, :speed_i2, :speed_fl, :speed_st
-                )
-            """), row)
+        conn.execute(text("""
+            INSERT INTO lap_times (
+                session_key, driver_number, lap_number,
+                lap_time_ms, s1_ms, s2_ms, s3_ms,
+                compound, tyre_life_laps,
+                is_personal_best, track_status, position, quali_segment, deleted,
+                recorded_at,
+                speed_i1, speed_i2, speed_fl, speed_st
+            ) VALUES (
+                :session_key, :driver_number, :lap_number,
+                :lap_time_ms, :s1_ms, :s2_ms, :s3_ms,
+                :compound, :tyre_life_laps,
+                :is_personal_best, :track_status, :position, :quali_segment, :deleted,
+                :recorded_at,
+                :speed_i1, :speed_i2, :speed_fl, :speed_st
+            )
+        """), rows)
     log.info("loader.laps_loaded", count=len(laps), session_key=session_key)
     return len(laps)
 
@@ -267,12 +271,133 @@ _TEL_INSERT = """
 """
 
 
+def _telemetry_storage_mode() -> str:
+    mode = settings.telemetry_storage_mode.strip().lower()
+    return mode if mode in {"database", "files"} else "database"
+
+
+def _telemetry_storage_key(session_key: int, driver_number: int, lap_number: int) -> str:
+    return f"telemetry/session_{session_key}/driver_{driver_number}/lap_{lap_number}.parquet"
+
+def _r2_client():
+    import boto3
+
+    return boto3.client(
+        "s3",
+        endpoint_url=settings.r2_endpoint_url,
+        aws_access_key_id=settings.r2_access_key_id,
+        aws_secret_access_key=settings.r2_secret_access_key,
+        region_name="auto",
+    )
+
+
+def _write_telemetry_artifact(
+    rows: list[dict],
+    session_key: int,
+    driver_number: int,
+    lap_number: int,
+) -> dict:
+    import io
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    storage_key = _telemetry_storage_key(session_key, driver_number, lap_number)
+    table = pa.Table.from_pylist(rows)
+    buf = io.BytesIO()
+    pq.write_table(table, buf, compression="zstd")
+    data = buf.getvalue()
+    digest = hashlib.sha256(data).hexdigest()
+
+    if settings.telemetry_artifact_backend == "r2":
+        _r2_client().put_object(
+            Bucket=settings.telemetry_artifact_bucket,
+            Key= storage_key,
+            Body=data,
+            ContentType="application/vnd.apache.parquet",
+        )
+        storage_backend = "r2"
+    else:
+        path = Path(settings.telemetry_artifact_dir) / storage_key
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        storage_backend = "local"
+
+    return {
+        "session_key": session_key,
+        "driver_number": driver_number,
+        "lap_number": lap_number,
+        "storage_key": storage_key,
+        "storage_backend": storage_backend,
+        "format": "parquet",
+        "sample_count": len(rows),
+        "size_bytes": len(data),
+        "checksum_sha256": digest,
+    }
+
+def _load_telemetry_files(rows: list[dict], session_key: int) -> int:
+    engine = _get_engine()
+    grouped: dict[tuple[int, int], list[dict]] = {}
+    for i, row in enumerate(rows):
+        driver_number = _clean_int(row.get("driver_number"))
+        lap_number = _clean_int(row.get("lap_number"))
+        if driver_number is None or lap_number is None:
+            continue
+        sample = {
+            "distance_m": _clean_float(row.get("distance_m")),
+            "speed_kmh": _clean_float(row.get("speed_kmh")),
+            "throttle_pct": _clean_float(row.get("throttle_pct")),
+            "brake": bool(row.get("brake", False)),
+            "gear": _clean_int(row.get("gear")),
+            "rpm": _clean_float(row.get("rpm")),
+            "drs": _clean_int(row.get("drs")),
+            "x_pos": _clean_float(row.get("x_pos")),
+            "y_pos": _clean_float(row.get("y_pos")),
+            "sample_order": row.get("sample_order", i),
+        }
+        grouped.setdefault((driver_number, lap_number), []).append(sample)
+
+    artifacts = []
+    for (driver_number, lap_number), samples in grouped.items():
+        samples.sort(key=lambda s: (
+            s["distance_m"] is None,
+            s["distance_m"] if s["distance_m"] is not None else 0,
+            s["sample_order"],
+        ))
+        artifacts.append(_write_telemetry_artifact(samples, session_key, driver_number, lap_number))
+
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM telemetry_artifacts WHERE session_key = :sk"), {"sk": session_key})
+        conn.execute(text("DELETE FROM telemetry WHERE session_key = :sk"), {"sk": session_key})
+        if artifacts:
+            conn.execute(text("""
+                INSERT INTO telemetry_artifacts (
+                    session_key, driver_number, lap_number,
+                    storage_key, storage_backend, format,
+                    sample_count, size_bytes, checksum_sha256
+                ) VALUES (
+                    :session_key, :driver_number, :lap_number,
+                    :storage_key, :storage_backend, :format,
+                    :sample_count, :size_bytes, :checksum_sha256
+                )
+            """), artifacts)
+
+    log.info("loader.telemetry_artifacts_loaded", artifacts=len(artifacts), samples=len(rows), session_key=session_key)
+    return len(rows)
+
+
 def load_telemetry(rows: list[dict], session_key: int) -> int:
     if not rows:
         return 0
+    if _telemetry_storage_mode() == "files":
+        return _load_telemetry_files(rows, session_key)
+
     now = datetime.now(timezone.utc)
     engine = _get_engine()
     with engine.begin() as conn:
+        conn.execute(
+            text("DELETE FROM telemetry_artifacts WHERE session_key = :sk"),
+            {"sk": session_key}
+        )
         conn.execute(
             text("DELETE FROM telemetry WHERE session_key = :sk"),
             {"sk": session_key}
