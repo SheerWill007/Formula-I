@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     auto_ingest_on_startup: bool = True
     auto_ingest_interval_minutes: int = 60
 
+    # CORS — comma-separated list of allowed origins.
+    # Defaults to wildcard; set to your frontend URL in production.
+    cors_origins: list[str] = ["*"]
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

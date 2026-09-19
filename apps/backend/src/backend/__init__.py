@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 
 from backend import extensions
 from backend.config import settings
+from backend.error_handlers import register_error_handlers
 
 log = structlog.get_logger()
 _auto_ingest_thread: threading.Thread | None = None
@@ -56,8 +57,9 @@ def create_app() -> Flask:
     app.config["DEBUG"] = settings.debug
     app.config["TESTING"] = settings.testing
 
-    # Allow Next.js dev server to call the API
-    CORS(app, origins="*")
+    # In development allow any origin; in production restrict to configured origins.
+    cors_origins = settings.cors_origins if settings.cors_origins else ["*"]
+    CORS(app, origins=cors_origins)
 
     extensions.engine = create_engine(
         settings.db_url,
@@ -86,16 +88,9 @@ def create_app() -> Flask:
     app.register_blueprint(predictions_bp, url_prefix="/api/v1")
     app.register_blueprint(schedule_bp, url_prefix="/api/v1")
 
-    @app.errorhandler(404)
-    def not_found(e):
-        return {"error": "Not found", "code": 404}, 404
+    register_error_handlers(app)
 
-    @app.errorhandler(500)
-    def server_error(e):
-        log.exception("unhandled_exception", error=str(e))
-        return {"error": "Internal server error", "code": 500}, 500
-
-    if settings.auto_ingest_enabled and not settings.testing and not settings.debug and not app.debug:
+    if settings.auto_ingest_enabled and not settings.testing:
         _start_auto_ingest_scheduler()
 
     log.info("app.created", debug=settings.debug or app.debug)

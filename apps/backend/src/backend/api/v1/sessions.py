@@ -2,12 +2,9 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from backend import extensions
+from backend.error_handlers import _is_missing_table_error
 
 sessions_bp = Blueprint("sessions", __name__)
-
-
-def _is_missing_table_error(exc: ProgrammingError) -> bool:
-    return "UndefinedTable" in exc.__class__.__name__ or "does not exist" in str(exc.orig)
 
 
 def _missing_schema_response():
