@@ -1,6 +1,6 @@
 # Data Model
 
-This document explains the core tables Slipstream uses and what they are for.
+This document explains the core tables BoxUp uses and what they are for.
 
 It is intentionally practical:
 
@@ -10,7 +10,7 @@ It is intentionally practical:
 
 ## Core idea
 
-Slipstream stores one normalized session dataset that is reused by:
+BoxUp stores one normalized session dataset that is reused by:
 
 - the backend API
 - the frontend UI
@@ -131,7 +131,7 @@ Why this table is special:
 
 - it is much larger than `lap_times`
 - it is used for rich comparison views, not as the default data source for every screen
-- Slipstream intentionally stores it selectively
+- BoxUp intentionally stores it selectively
 - hosted deployments can leave this table empty and serve raw traces from artifacts instead
 
 ### `telemetry_artifacts`
@@ -288,7 +288,7 @@ Potentially large:
 - `telemetry`
 - raw telemetry artifacts outside the database
 
-Slipstream keeps telemetry smaller by storing only the laps that provide the most value for the UI.
+BoxUp keeps telemetry smaller by storing only the laps that provide the most value for the UI.
 
 Current policy for qualifying:
 
@@ -337,6 +337,6 @@ When adding new analytics:
 
 ## Related docs
 
-- [docs/architecture.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/architecture.md)
-- [docs/ingestion.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/ingestion.md)
-- [docs/concepts/qualifying-telemetry.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/concepts/qualifying-telemetry.md)
+- [docs/architecture.md](architecture.md)
+- [docs/ingestion.md](ingestion.md)
+- [docs/concepts/qualifying-telemetry.md](concepts/qualifying-telemetry.md)

@@ -1,6 +1,6 @@
 # Local Development
 
-This guide is for contributors running Slipstream on their own machine.
+This guide is for contributors running BoxUp on their own machine.
 
 It focuses on:
 
@@ -12,7 +12,7 @@ It focuses on:
 
 ## Local defaults
 
-Slipstream is designed to work locally without hosted infrastructure.
+BoxUp is designed to work locally without hosted infrastructure.
 
 Default local services:
 
@@ -31,8 +31,8 @@ Backend and ML both fall back to this local URL if you do not override it.
 
 Relevant config files:
 
-- [apps/backend/src/backend/config.py](/Users/abdullahmusharaf/Desktop/F1/Slipstream/apps/backend/src/backend/config.py)
-- [packages/ml/src/ml/config.py](/Users/abdullahmusharaf/Desktop/F1/Slipstream/packages/ml/src/ml/config.py)
+- [apps/backend/src/backend/config.py](../apps/backend/src/backend/config.py)
+- [packages/ml/src/ml/config.py](../packages/ml/src/ml/config.py)
 
 ## Recommended setup
 
@@ -220,6 +220,6 @@ When debugging locally:
 
 ## Related docs
 
-- [docs/ingestion.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/ingestion.md)
-- [docs/deployment.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/deployment.md)
-- [docs/ml-race-prediction.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/ml-race-prediction.md)
+- [docs/ingestion.md](ingestion.md)
+- [docs/deployment.md](deployment.md)
+- [docs/ml-race-prediction.md](ml-race-prediction.md)

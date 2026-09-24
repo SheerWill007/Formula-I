@@ -1,6 +1,6 @@
 # ML Race Prediction
 
-Pitwall's ML module now treats **podium probability** as the primary product target. The stable production backbone still learns race finishing order, then converts that race-order model into P1/P2/P3 and podium probabilities with Monte Carlo uncertainty, feature-stream attribution, and statistical validation artifacts.
+BoxUp's ML module now treats **podium probability** as the primary product target. The stable production backbone still learns race finishing order, then converts that race-order model into P1/P2/P3 and podium probabilities with Monte Carlo uncertainty, feature-stream attribution, and statistical validation artifacts.
 
 This document answers three practical questions:
 
@@ -29,7 +29,7 @@ In deployed environments, prediction requests may also trigger model training if
 
 ### Training
 
-For training, Slipstream builds examples from weekends that have:
+For training, BoxUp builds examples from weekends that have:
 
 - one qualifying session (`Q`)
 - one race session (`R`)
@@ -97,7 +97,7 @@ Implementation notes:
 
 ### Static circuit context
 
-These flags come from Slipstream's circuit categorisation:
+These flags come from BoxUp's circuit categorisation:
 
 - `is_street_circuit`
 - `is_power_circuit`

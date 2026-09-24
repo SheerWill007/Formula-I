@@ -1,6 +1,6 @@
 # Pre-Public Release Checklist
 
-This checklist is for the version of Slipstream you want strangers on the internet to use without you sitting beside them.
+This checklist is for the version of BoxUp you want strangers on the internet to use without you sitting beside them.
 
 It is intentionally opinionated and constrained by one important reality:
 
@@ -34,7 +34,7 @@ not "ingest everything".
 
 ## 2. Data coverage strategy
 
-Because of the 400 MB limit, Slipstream should launch with a curated dataset, not a full archive.
+Because of the 400 MB limit, BoxUp should launch with a curated dataset, not a full archive.
 
 ### Recommended public dataset
 
@@ -118,7 +118,7 @@ If a new ingestion wave would push the DB close to the cap:
 - [ ] qualifying sessions have been re-ingested when segment logic changes
 - [ ] smoke tests have been run after deploy
 
-See [deployment.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/deployment.md) for the full sequence.
+See [deployment.md](deployment.md) for the full sequence.
 
 ## 6. Documentation readiness
 

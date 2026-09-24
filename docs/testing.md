@@ -1,6 +1,6 @@
 # Testing
 
-This guide explains how testing works in Slipstream and how to avoid the most common mistakes.
+This guide explains how testing works in BoxUp and how to avoid the most common mistakes.
 
 The most important rule is simple:
 
@@ -12,7 +12,7 @@ The most important rule is simple:
 
 Location:
 
-- [apps/backend/tests](/Users/abdullahmusharaf/Desktop/F1/Slipstream/apps/backend/tests)
+- [apps/backend/tests](../apps/backend/tests)
 
 What they cover:
 
@@ -29,13 +29,13 @@ How they work:
 
 Key file:
 
-- [conftest.py](/Users/abdullahmusharaf/Desktop/F1/Slipstream/apps/backend/tests/conftest.py)
+- [conftest.py](../apps/backend/tests/conftest.py)
 
 ### Frontend tests
 
 Location:
 
-- [apps/frontend/lib/telemetry-quali.test.ts](/Users/abdullahmusharaf/Desktop/F1/Slipstream/apps/frontend/lib/telemetry-quali.test.ts)
+- [apps/frontend/lib/telemetry-quali.test.ts](../apps/frontend/lib/telemetry-quali.test.ts)
 
 What they cover today:
 
@@ -178,5 +178,5 @@ Before opening a PR:
 
 ## Related docs
 
-- [docs/local-development.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/local-development.md)
-- [docs/ml-race-prediction.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/ml-race-prediction.md)
+- [docs/local-development.md](local-development.md)
+- [docs/ml-race-prediction.md](ml-race-prediction.md)

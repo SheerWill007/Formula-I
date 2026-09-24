@@ -1,6 +1,6 @@
 # Ingestion
 
-Slipstream ingestion turns raw FastF1 session data into the database tables used by the backend, frontend, and ML pipeline.
+BoxUp ingestion turns raw FastF1 session data into the database tables used by the backend, frontend, and ML pipeline.
 
 This guide explains:
 
@@ -19,13 +19,13 @@ uv run python -m ingestion.ingest_session --year 2026 --gp "Australian" --sessio
 
 Package path:
 
-- [packages/ingestion/src/ingestion/ingest_session.py](/Users/abdullahmusharaf/Desktop/F1/Slipstream/packages/ingestion/src/ingestion/ingest_session.py)
+- [packages/ingestion/src/ingestion/ingest_session.py](../packages/ingestion/src/ingestion/ingest_session.py)
 
 Core modules:
 
-- [fastf1_client.py](/Users/abdullahmusharaf/Desktop/F1/Slipstream/packages/ingestion/src/ingestion/fastf1_client.py)
-- [loader.py](/Users/abdullahmusharaf/Desktop/F1/Slipstream/packages/ingestion/src/ingestion/loader.py)
-- [database.py](/Users/abdullahmusharaf/Desktop/F1/Slipstream/packages/ingestion/src/ingestion/database.py)
+- [fastf1_client.py](../packages/ingestion/src/ingestion/fastf1_client.py)
+- [loader.py](../packages/ingestion/src/ingestion/loader.py)
+- [database.py](../packages/ingestion/src/ingestion/database.py)
 
 ## What gets stored
 
@@ -100,7 +100,7 @@ Session-level weather summary is written to `sessions`.
 
 ### Qualifying (`Q`)
 
-Slipstream stores:
+BoxUp stores:
 
 - lap times for all qualifying laps
 - persisted `quali_segment` metadata on `lap_times`
@@ -114,7 +114,7 @@ Why:
 
 ### Race (`R`)
 
-Slipstream stores:
+BoxUp stores:
 
 - lap times
 - positions
@@ -125,7 +125,7 @@ Telemetry is not the main focus for race ingestion in the current product flow.
 
 ### Practice (`FP2` and others)
 
-Slipstream stores:
+BoxUp stores:
 
 - lap times
 - compounds
@@ -135,7 +135,7 @@ FP2 is especially useful for the ML strategy signal because it is the most race-
 
 ## Rerun behavior
 
-Slipstream uses a delete-then-insert pattern for session reloads.
+BoxUp uses a delete-then-insert pattern for session reloads.
 
 Why:
 
@@ -252,6 +252,6 @@ GROUP BY session_key;
 
 ## Related docs
 
-- [docs/architecture.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/architecture.md)
-- [docs/ml-race-prediction.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/ml-race-prediction.md)
-- [README.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/README.md)
+- [docs/architecture.md](architecture.md)
+- [docs/ml-race-prediction.md](ml-race-prediction.md)
+- [README.md](../README.md)

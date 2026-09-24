@@ -1,7 +1,10 @@
 [project]
-name = "slipstream-ml"
+name = "boxup-ml"
 version = "0.1.0"
 requires-python = ">=3.11"
+authors = [
+    { name = "William Law II", email = "william@willx.tech" },
+]
 dependencies = [
     "flaml>=2.1",
     "xgboost>=2.0",

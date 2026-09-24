@@ -56,7 +56,7 @@ export default function TopBar() {
             letterSpacing: '0.05em',
             fontFamily: 'Inter, sans-serif'
           }}>
-            SLIPSTREAM
+            BOXUP
           </span>
         </Link>
 

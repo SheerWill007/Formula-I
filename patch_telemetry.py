@@ -8,7 +8,7 @@ Makes 3 surgical edits:
   2. Add state + useEffect after existing state declarations  
   3. Add Q1/Q2/Q3 panel in the JSX (after sector times panel)
 
-Run from your Slipstream root:
+Run from your BoxUp root:
   python3 patch_telemetry.py
 """
 import sys
@@ -18,7 +18,7 @@ FILE = "apps/frontend/app/sessions/[key]/telemetry/page.tsx"
 
 if not os.path.exists(FILE):
     print(f"❌ File not found: {FILE}")
-    print("   Run this script from your Slipstream root directory.")
+    print("   Run this script from your BoxUp root directory.")
     sys.exit(1)
 
 with open(FILE, "r") as f:

@@ -1,6 +1,6 @@
 # Deployment
 
-This guide covers the practical deployment flow for Slipstream's current stack.
+This guide covers the practical deployment flow for BoxUp's current stack.
 
 Today that usually means:
 
@@ -176,7 +176,7 @@ Safety:
 
 ### Deployed ML predictions
 
-Slipstream's deployed predictions can train on demand from the web service when a request arrives and no model file exists yet.
+BoxUp's deployed predictions can train on demand from the web service when a request arrives and no model file exists yet.
 
 Practical implications:
 
@@ -243,6 +243,6 @@ For data-backed features, code-only rollback is often not enough if the issue is
 
 ## Related docs
 
-- [docs/local-development.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/local-development.md)
-- [docs/ingestion.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/docs/ingestion.md)
-- [README.md](/Users/abdullahmusharaf/Desktop/F1/Slipstream/README.md)
+- [docs/local-development.md](local-development.md)
+- [docs/ingestion.md](ingestion.md)
+- [README.md](../README.md)

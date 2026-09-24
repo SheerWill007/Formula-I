@@ -189,6 +189,10 @@ This project is licensed under the GNU Affero General Public License v3.0 (AGPL-
 
 For issues, questions, or suggestions, please open an issue on the repository.
 
+## Author
+
+**William Law II** — [willx.tech](https://willx.tech)
+
 ---
 
 **Last Updated**: June 2026

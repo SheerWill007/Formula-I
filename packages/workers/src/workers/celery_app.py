@@ -16,7 +16,7 @@ from celery.schedules import crontab
 from workers.config import settings
 
 app = Celery(
-    'pitwall',
+    'boxup',
     broker=settings.redis_url,
     backend=settings.redis_url,
     include=[

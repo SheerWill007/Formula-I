@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     database_url:        str = "postgresql+psycopg://pitwall:pitwall@localhost:5432/pitwall"
     mlflow_tracking_uri: str = "http://localhost:5001"
-    model_name:          str = "slipstream-race-predictor"
+    model_name:          str = "boxup-race-predictor"
     telemetry_artifact_dir: str = "./telemetry_artifacts"
 
     model_config = SettingsConfigDict(

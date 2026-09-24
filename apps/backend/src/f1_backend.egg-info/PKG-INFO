@@ -2,7 +2,9 @@ Metadata-Version: 2.4
 Name: f1-backend
 Version: 0.1.0
 Summary: Formula 1 Race Analytics & Telemetry Backend API
-Author: Formula 1 Team
+Author: William Law II
+Author-email: william@willx.tech
+Project-URL: Portfolio, https://willx.tech
 License: Apache-2.0
 Keywords: formula1,f1,racing,telemetry,analytics
 Requires-Python: >=3.10

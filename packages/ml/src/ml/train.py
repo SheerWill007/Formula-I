@@ -194,8 +194,8 @@ def main():
     mlflow_run = nullcontext()
     try:
         mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
-        mlflow.set_experiment("slipstream-race-prediction")
-        mlflow_run = mlflow.start_run(run_name="slipstream-race-predictor")
+        mlflow.set_experiment("boxup-race-prediction")
+        mlflow_run = mlflow.start_run(run_name="boxup-race-predictor")
     except Exception as e:
         mlflow_enabled = False
         log.warning(
