@@ -188,8 +188,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div style={{ background: '#FFFFFF', borderRadius: 24, padding: 24, border: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: 13, fontWeight: 900, color: '#0F172A', marginBottom: 24, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 24, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ fontSize: 13, fontWeight: 900, color: 'var(--text)', marginBottom: 24, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             SESSION CONDITIONS
           </h3>
 
@@ -203,7 +203,7 @@ export default async function DashboardPage() {
           <div style={{
             marginTop: 18,
             paddingTop: 18,
-            borderTop: '1px solid #F1F5F9',
+            borderTop: '1px solid var(--border)',
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
@@ -221,19 +221,19 @@ export default async function DashboardPage() {
                 justifyContent: 'space-between',
                 gap: 12,
                 textDecoration: 'none',
-                background: 'linear-gradient(180deg, rgba(248,250,255,0.98) 0%, rgba(241,245,251,0.98) 100%)',
-                border: '1px solid rgba(226,232,240,0.92)',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
                 borderRadius: 16,
                 padding: '14px 16px',
-                color: '#0F172A',
-                boxShadow: '0 10px 28px rgba(24,39,75,0.06)',
+                color: 'var(--text)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               <div>
                 <div style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Open Latest Weekend
                 </div>
-                <div style={{ marginTop: 4, color: '#64748B', fontSize: 12 }}>
+                <div style={{ marginTop: 4, color: 'var(--text-3)', fontSize: 12 }}>
                   Race, quali, and practice summary with direct analysis actions.
                 </div>
               </div>
@@ -266,13 +266,13 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div style={{ background: '#FFFFFF', borderRadius: 24, padding: '24px 16px', border: '1px solid #F1F5F9', overflowX: 'auto' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 24, padding: '24px 16px', border: '1px solid var(--border)', overflowX: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
           <div>
-            <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.03em', textTransform: 'uppercase' }}>
+            <h2 style={{ fontSize: 24, fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', textTransform: 'uppercase' }}>
               {currentYear} STANDINGS
             </h2>
-            <p style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, marginTop: 4 }}>Updated after Round {standings.round}</p>
+            <p style={{ fontSize: 12, color: 'var(--text-4)', fontWeight: 500, marginTop: 4 }}>Updated after Round {standings.round}</p>
           </div>
         </div>
 
@@ -293,11 +293,11 @@ export default async function DashboardPage() {
 
 function ConditionCard({ icon: Icon, label, value, color }: { icon: React.ElementType, label: string, value: string, color: string }) {
   return (
-    <div style={{ background: '#F8FAFC', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ background: 'var(--surface-2)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <Icon size={18} color={color} style={{ opacity: 0.8 }} />
       <div>
-        <div style={{ fontSize: 9, fontWeight: 800, color: '#94A3B8', letterSpacing: '0.05em' }}>{label}</div>
-        <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em', marginTop: 2 }}>{value}</div>
+        <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-4)', letterSpacing: '0.05em' }}>{label}</div>
+        <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.02em', marginTop: 2 }}>{value}</div>
       </div>
     </div>
   )
@@ -305,28 +305,28 @@ function ConditionCard({ icon: Icon, label, value, color }: { icon: React.Elemen
 
 function StatCard({ label, value, sub, subLabel, points, timer, icon: Icon }: { label: string, value: string, sub: string, subLabel?: string, points?: number, timer?: string, icon: React.ElementType, color: string }) {
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 24, border: '1px solid #F1F5F9', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: 'var(--surface)', borderRadius: 20, padding: 24, border: '1px solid var(--border)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-        <div style={{ fontSize: 9, fontWeight: 800, color: '#94A3B8', letterSpacing: '0.05em', maxWidth: '70%', textTransform: 'uppercase' }}>{label}</div>
-        <div style={{ width: 24, height: 24, background: '#FEE2E2', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-4)', letterSpacing: '0.05em', maxWidth: '70%', textTransform: 'uppercase' }}>{label}</div>
+        <div style={{ width: 24, height: 24, background: 'rgba(232,0,45,0.12)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={14} color="#E8002D" />
         </div>
       </div>
 
-      <div style={{ fontSize: points ? 24 : 28, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: points ? 24 : 28, fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
         {value}
       </div>
 
       {subLabel && (
-        <div style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', marginTop: 8, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-4)', marginTop: 8, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
           {subLabel}
         </div>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: subLabel ? 4 : 12 }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: '#64748B' }}>{sub}</span>
-        {points && <span style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>{points} <span style={{ fontSize: 10, color: '#94A3B8' }}>PTS</span></span>}
-        {timer && <span style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', fontFamily: 'monospace' }}>{timer}</span>}
+        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-3)' }}>{sub}</span>
+        {points && <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{points} <span style={{ fontSize: 10, color: 'var(--text-4)' }}>PTS</span></span>}
+        {timer && <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--text)', fontFamily: 'monospace' }}>{timer}</span>}
       </div>
     </div>
   )
