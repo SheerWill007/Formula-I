@@ -94,7 +94,7 @@ function LandingHeroMedia() {
 
 export default function LandingPage() {
   return (
-    <div style={{ background: '#FAFAFA', overflowX: 'hidden', width: '100%', paddingTop: 16 }}>
+    <div style={{ background: 'var(--bg)', color: 'var(--text)', overflowX: 'hidden', width: '100%', paddingTop: 20 }}>
 
       {/*  HERO SECTION ─────────────────────────────────────────────────── */}
       <style>{`
