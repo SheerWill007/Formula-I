@@ -81,10 +81,10 @@ function RaceCard({ race, isNext }: { race: { round: number, event_name: string,
 
   return (
     <div className="race-card" style={{
-      background: '#FFFFFF',
+      background: 'var(--surface)',
       borderRadius: 24,
       padding: '40px 32px',
-      border: isNext ? '2px solid #E8002D' : '1px solid #F1F5F9',
+      border: isNext ? '2px solid #E8002D' : '1px solid var(--border)',
       position: 'relative',
       overflow: 'hidden',
       display: 'flex',
@@ -103,7 +103,7 @@ function RaceCard({ race, isNext }: { race: { round: number, event_name: string,
         transform: 'translateY(-50%)',
         fontSize: 100,
         fontWeight: 900,
-        color: '#c4c9cdff',
+        color: 'var(--border-2)',
         zIndex: 0,
         pointerEvents: 'none',
         lineHeight: 1
@@ -114,11 +114,11 @@ function RaceCard({ race, isNext }: { race: { round: number, event_name: string,
       <div className="race-card-inner" style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="race-card-content" style={{ flex: 1, paddingLeft: 130 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-            <h3 style={{ fontSize: 26, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
+            <h3 style={{ fontSize: 26, fontWeight: 900, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>
               {race.event_name}
             </h3>
           </div>
-          <p style={{ fontSize: 15, color: '#64748B', fontWeight: 500, margin: 0 }}>
+          <p style={{ fontSize: 15, color: 'var(--text-3)', fontWeight: 500, margin: 0 }}>
             {race.circuit} • {new Date(race.event_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })}
           </p>
         </div>
@@ -168,10 +168,10 @@ export default async function SchedulePage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
         <div>
-          <h2 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.04em' }}>
+          <h2 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)', margin: 0, letterSpacing: '-0.04em' }}>
             2026 Season
           </h2>
-          <p style={{ fontSize: 14, color: '#64748B', fontWeight: 500, marginTop: 4 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 500, marginTop: 4 }}>
             {races.length} Rounds this Season
           </p>
         </div>
