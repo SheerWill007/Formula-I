@@ -275,7 +275,7 @@ export default function LandingPage() {
             BoxUp is built for engineers and F1 fans shaping the future of accessible motorsport analytics.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/sessions/latest" style={{
+            <a href="https://github.com/SheerWill007/Formula-I" style={{
               display: 'inline-flex', alignItems: 'center', gap: 12,
               padding: '16px 36px', background: 'var(--surface-2)', color: 'var(--text)',
               border: '1px solid var(--border-2)',
@@ -286,8 +286,8 @@ export default function LandingPage() {
             }}
               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-              <Globe size={18} /> Explore the data
-            </Link>
+              <Globe size={18} /> Contribute to the Community.
+            </a>
           </div>
         </div>
       </section>
