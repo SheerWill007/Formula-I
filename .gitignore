@@ -3,12 +3,16 @@
 .env.local
 .env.*.local
 
-# uv 
+# uv / Python
 .venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # FastF1 cache 
 fastf1_cache/
