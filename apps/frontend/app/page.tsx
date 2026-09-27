@@ -1,14 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { Zap, Brain, Globe, Activity, Play } from 'lucide-react'
 
 function LandingHeroMedia() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const [shouldRenderVideo, setShouldRenderVideo] = useState(false)
-  const [videoReady, setVideoReady] = useState(false)
+  const [shouldRenderVideo, setShouldRenderVideo] = useState(true)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -20,7 +18,8 @@ function LandingHeroMedia() {
 
   useEffect(() => {
     const video = videoRef.current
-    if (!video || !shouldRenderVideo) { setVideoReady(false); return }
+    if (!video || !shouldRenderVideo) return
+    void video.play().catch(() => {})
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) { void video.play().catch(() => {}); return }
@@ -32,42 +31,36 @@ function LandingHeroMedia() {
     return () => { observer.disconnect(); video.pause() }
   }, [shouldRenderVideo])
 
-  return (
-    <>
-      <Image
-        src="/LandingPage3-poster.jpg"
-        alt="BoxUp racing telemetry dashboard"
-        fill
-        priority
-        sizes="100vw"
-        style={{ objectFit: 'cover' }}
+  if (!shouldRenderVideo) {
+    return (
+      <div
+        aria-hidden="true"
+        style={{ position: 'absolute', inset: 0, background: '#050608' }}
       />
-      {shouldRenderVideo ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-          poster="/LandingPage3-poster.jpg"
-          aria-hidden="true"
-          onCanPlay={() => setVideoReady(true)}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: videoReady ? 1 : 0,
-            transition: 'opacity 220ms ease',
-          }}
-        >
-          <source src="/LandingPage3.webm" type="video/webm" />
-          <source src="/LandingPage3.mp4" type="video/mp4" />
-        </video>
-      ) : null}
-    </>
+    )
+  }
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        objectPosition: 'center 18%',
+      }}
+    >
+      <source src="/LandingPage3.webm" type="video/webm" />
+      <source src="/LandingPage3.mp4" type="video/mp4" />
+    </video>
   )
 }
 
@@ -89,51 +82,55 @@ export default function LandingPage() {
         {/* Video / Poster fill */}
         <LandingHeroMedia />
 
-        {/* Dark gradient overlay */}
+        {/* Dark gradient overlay — keep the video readable, not covered */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to top, rgba(5,6,8,0.82) 0%, rgba(5,6,8,0.30) 55%, rgba(5,6,8,0.10) 100%)',
+          background: 'linear-gradient(to top, rgba(5,6,8,0.78) 0%, rgba(5,6,8,0.18) 38%, rgba(5,6,8,0.04) 100%)',
           zIndex: 1,
+          pointerEvents: 'none',
         }} />
 
-        {/* Hero Text — centred over the video */}
+        {/* Hero Text — small, italic, anchored low so the video stays visible */}
         <div style={{
-          position: 'relative',
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 40,
           zIndex: 2,
           textAlign: 'center',
           padding: '0 24px',
-          maxWidth: 820,
-          width: '100%',
+          pointerEvents: 'none',
         }}>
           <h1 style={{
             fontFamily: 'Inter, sans-serif',
-            fontWeight: 900,
-            fontSize: 'clamp(2.6rem, 7vw, 5rem)',
-            lineHeight: 1.0,
-            letterSpacing: '-0.04em',
-            color: '#FFFFFF',
-            marginBottom: 20,
+            fontWeight: 800,
+            fontStyle: 'italic',
+            fontSize: 'clamp(1.1rem, 2.2vw, 1.6rem)',
+            lineHeight: 1.2,
+            letterSpacing: '0.08em',
+            color: 'rgba(255,255,255,0.92)',
+            marginBottom: 12,
             textTransform: 'uppercase',
-            textShadow: '0 2px 24px rgba(0,0,0,0.5)',
+            textShadow: '0 1px 12px rgba(0,0,0,0.55)',
           }}>
-            PRECISION IN<br />EVERY MILLISECOND
+            Precision in every millisecond
           </h1>
 
           <p style={{
             fontFamily: 'Inter, sans-serif',
-            fontSize: 16,
-            lineHeight: 1.65,
-            color: 'rgba(255,255,255,0.80)',
-            maxWidth: 480,
-            margin: '0 auto 36px',
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: 'rgba(255,255,255,0.72)',
+            maxWidth: 420,
+            margin: '0 auto 20px',
             textShadow: '0 1px 8px rgba(0,0,0,0.4)',
           }}>
             Unlock elite-level race analytics. From real-time telemetry to
             predictive race strategy, dominate the grid with advanced motorsport data.
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', pointerEvents: 'auto' }}>
             <Link
               href="/dashboard"
               style={{
@@ -166,14 +163,6 @@ export default function LandingPage() {
               ENTER BOXUP
             </Link>
           </div>
-        </div>
-
-        {/* Scroll line */}
-        <div style={{
-          position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 2, opacity: 0.45,
-        }}>
-          <div style={{ width: 1, height: 48, background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.8))' }} />
         </div>
       </section>
 

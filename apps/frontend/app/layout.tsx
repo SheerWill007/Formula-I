@@ -2,6 +2,7 @@
 
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { usePathname } from 'next/navigation'
 import './globals.css'
 import BottomNav from '@/components/layout/BottomNav'
 import SmoothScroll from '@/components/layout/SmoothScroll'
@@ -10,6 +11,9 @@ import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { AudioProvider } from '@/components/layout/AudioProvider'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const isLanding = pathname === '/'
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
@@ -17,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AudioProvider>
             <SmoothScroll />
             <TopBar />
-            <main>
+            <main className={isLanding ? 'landing' : undefined}>
               {children}
             </main>
             <BottomNav />

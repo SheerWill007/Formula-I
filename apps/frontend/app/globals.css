@@ -167,6 +167,29 @@ main.landing {
 }
 
 /* ── Upper Navigation Bar: Refined Pill/Tube to match reference ── */
+.corner-brand {
+  position: fixed;
+  top: 18px;
+  left: 22px;
+  z-index: 110;
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  text-decoration: none;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+  line-height: 1;
+  pointer-events: auto;
+}
+
+[data-theme='light'] .corner-brand {
+  color: #0F172A;
+  text-shadow: none;
+}
+
 .topbar-wrapper {
   position: fixed;
   top: 14px;
@@ -195,7 +218,7 @@ main.landing {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 14px 4px 10px;
+  padding: 4px 14px 4px 18px;
   gap: 16px;
   transition: all 220ms ease;
 }
@@ -565,6 +588,9 @@ main.landing {
     height: 46px;
     gap: 8px;
   }
+  .topbar-wrapper {
+    padding-left: 88px;
+  }
   .topbar-nav-links {
     display: none;
   }
@@ -582,6 +608,7 @@ main.landing {
   }
 
   main { padding-top: 72px; padding-bottom: 96px; }
+  main.landing { padding-top: 0; padding-bottom: 0; }
   .layout-wrapper { padding: 12px 12px 32px; }
   .page-title { font-size: 2rem; }
   .telemetry-top-grid { grid-template-columns: 1fr !important; }
@@ -647,6 +674,11 @@ main.landing {
 }
 
 @media (max-width: 480px) {
+  .corner-brand {
+    top: 12px;
+    left: 12px;
+    font-size: 18px;
+  }
   .topbar-wrapper {
     top: 8px;
     padding: 0 8px;

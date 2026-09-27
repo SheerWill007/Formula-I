@@ -52,16 +52,10 @@ export default function TopBar() {
 
   return (
     <header className="topbar-wrapper">
+      <Link href="/" className="corner-brand" aria-label="BoxUp Home">
+        BoxUp
+      </Link>
       <nav className="topbar-tube">
-        {/* Left Section: Logo with Live Dot */}
-        <div className="topbar-brand-section">
-          <Link href="/" className="topbar-brand-capsule" aria-label="BoxUp Home">
-            <span className="live-indicator-dot" />
-            <span className="brand-wordmark">BOXUP</span>
-          </Link>
-          <div className="brand-divider" />
-        </div>
-
         {/* Center Section: Navigation Links */}
         <div className="topbar-nav-links">
           {navItems.map((item) => {
