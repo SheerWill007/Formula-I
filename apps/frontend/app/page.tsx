@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { Zap, Brain, Globe, Activity } from 'lucide-react'
+import { Zap, Brain, Globe, Activity, Play } from 'lucide-react'
 
 function LandingHeroMedia() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -155,6 +155,40 @@ export default function LandingPage() {
             predictive race strategy, dominate the grid with
             advanced motorsport data archive.
           </p>
+
+          {/* Enter BoxUp Button matching design */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+            <Link
+              href="/dashboard"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                background: '#E8002D',
+                color: '#FFFFFF',
+                padding: '13px 32px',
+                borderRadius: 8,
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 14,
+                fontWeight: 800,
+                letterSpacing: '0.04em',
+                textDecoration: 'none',
+                boxShadow: '0 8px 24px rgba(232, 0, 45, 0.38)',
+                transition: 'transform 160ms ease, background 160ms ease, box-shadow 160ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 12px 28px rgba(232, 0, 45, 0.48)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(232, 0, 45, 0.38)'
+              }}
+            >
+              <Play size={16} fill="#FFFFFF" strokeWidth={0} />
+              ENTER BOXUP
+            </Link>
+          </div>
         </div>
 
         {/* Partners / Data sources strip */}

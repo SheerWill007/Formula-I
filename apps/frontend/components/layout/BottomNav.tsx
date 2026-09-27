@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Flag, Zap, LayoutDashboard } from 'lucide-react'
+import { Home, LayoutDashboard, Flag, Calendar, Trophy } from 'lucide-react'
 
 const NAV = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/sessions', label: 'Sessions', icon: Flag },
-  { href: '/predictions', label: 'Predictions', icon: Zap },
+  { href: '/schedule', label: 'Calendar', icon: Calendar },
+  { href: '/dashboard#standings', label: 'Standings', icon: Trophy },
 ]
 
 export default function BottomNav() {
@@ -25,7 +26,7 @@ export default function BottomNav() {
               href={href}
               className={`bottom-nav-link ${active ? 'active' : ''}`}
             >
-              <Icon size={17} strokeWidth={active ? 2.5 : 1.9} />
+              <Icon size={16} strokeWidth={active ? 2.5 : 1.9} />
               <span className="bottom-nav-label">
                 {label}
               </span>

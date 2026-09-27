@@ -19,14 +19,22 @@ export default function TopBar() {
 
   const navItems = [
     {
+      name: 'Home',
+      href: '/',
+      active: pathname === '/',
+      isHome: true,
+    },
+    {
       name: 'Dashboard',
       href: '/dashboard',
       active: pathname === '/dashboard',
     },
     {
-      name: 'Latest Weekend',
-      href: '/sessions/latest',
-      active: pathname === '/sessions/latest' || pathname.endsWith('/overview'),
+      name: 'Sessions',
+      href: '/sessions',
+      active:
+        pathname === '/sessions' ||
+        pathname.startsWith('/sessions/'),
     },
     {
       name: 'Season Calendar',
@@ -34,13 +42,9 @@ export default function TopBar() {
       active: pathname === '/schedule',
     },
     {
-      name: 'Archive',
-      href: '/sessions',
-      active:
-        pathname === '/sessions' ||
-        (pathname.startsWith('/sessions/') &&
-          pathname !== '/sessions/latest' &&
-          !pathname.endsWith('/overview')),
+      name: 'Standings',
+      href: '/dashboard#standings',
+      active: pathname === '/dashboard#standings',
     },
   ]
 
@@ -49,47 +53,46 @@ export default function TopBar() {
   return (
     <header className="topbar-wrapper">
       <nav className="topbar-tube">
-        {/* Left Section: Nav Links */}
-        <div className="topbar-left">
-          <div className="topbar-nav-links">
-            {navItems.map((item) => {
-              const isActive = item.active
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`topbar-link ${isActive ? 'active' : ''}`}
-                >
-                  {item.name}
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Center Section: Italicized BoxUp Brand */}
-        <div className="topbar-center">
-          <Link href="/" className="topbar-brand" aria-label="BoxUp Home">
-            <span className="brand-italic">BOXUP</span>
+        {/* Left Section: Logo with Live Dot */}
+        <div className="topbar-brand-section">
+          <Link href="/" className="topbar-brand-capsule" aria-label="BoxUp Home">
+            <span className="live-indicator-dot" />
+            <span className="brand-wordmark">BOXUP</span>
           </Link>
+          <div className="brand-divider" />
         </div>
 
-        {/* Right Section: Music & Theme Toggles */}
-        <div className="topbar-right">
-          {/* Music Toggle */}
+        {/* Center Section: Navigation Links */}
+        <div className="topbar-nav-links">
+          {navItems.map((item) => {
+            const isActive = item.active
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`topbar-link ${isActive ? 'active' : ''} ${item.isHome ? 'home-tab' : ''}`}
+              >
+                {item.name}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Right Section: Sound Toggle & Theme Toggle */}
+        <div className="topbar-controls">
+          {/* Sound / Music Toggle */}
           <button
             type="button"
             onClick={toggleMusic}
-            aria-label={isPlaying ? 'Pause music' : 'Play music'}
-            title={isPlaying ? 'Mute ambient sound' : 'Play ambient audio'}
-            className={`tube-icon-button ${isPlaying ? 'active' : ''}`}
+            aria-label={isPlaying ? 'Mute sound' : 'Play sound'}
+            title={isPlaying ? 'Mute atmospheric sound' : 'Play atmospheric sound'}
+            className={`tube-control-btn sound-toggle ${isPlaying ? 'playing' : ''}`}
           >
             {isPlaying ? (
-              <Volume2 size={16} strokeWidth={2.2} />
+              <Volume2 size={15} strokeWidth={2.2} />
             ) : (
-              <VolumeX size={16} strokeWidth={2.2} />
+              <VolumeX size={15} strokeWidth={2.2} />
             )}
-            {isPlaying && <span className="music-pulse-dot" />}
           </button>
 
           {/* Theme Toggle */}
@@ -98,12 +101,12 @@ export default function TopBar() {
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             title={isDark ? 'Light Mode' : 'Dark Mode'}
-            className="tube-icon-button theme-toggle"
+            className="tube-control-btn theme-toggle"
           >
             {isDark ? (
-              <Sun size={16} strokeWidth={2.2} className="theme-icon sun" />
+              <Moon size={15} strokeWidth={2.2} />
             ) : (
-              <Moon size={16} strokeWidth={2.2} className="theme-icon moon" />
+              <Sun size={15} strokeWidth={2.2} />
             )}
           </button>
         </div>
