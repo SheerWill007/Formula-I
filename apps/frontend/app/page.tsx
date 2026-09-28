@@ -286,7 +286,7 @@ export default function LandingPage() {
             }}
               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-              <Globe size={18} /> Contribute to the Community.
+              <Globe size={18} /> Contribute to the Project.
             </a>
           </div>
         </div>
