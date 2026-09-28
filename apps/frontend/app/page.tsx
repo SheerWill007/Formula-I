@@ -92,7 +92,7 @@ export default function LandingPage() {
         }} />
 
         {/* Hero Text — small, italic, anchored low so the video stays visible */}
-        <div style={{
+        <div className="landing-hero-copy-wrap" style={{
           position: 'absolute',
           left: 0,
           right: 0,
@@ -102,7 +102,7 @@ export default function LandingPage() {
           padding: '0 24px',
           pointerEvents: 'none',
         }}>
-          <h1 style={{
+          <h1 className="landing-hero-title" style={{
             fontFamily: 'Inter, sans-serif',
             fontWeight: 800,
             fontStyle: 'italic',
@@ -117,7 +117,7 @@ export default function LandingPage() {
             Precision in every millisecond
           </h1>
 
-          <p style={{
+          <p className="landing-hero-text" style={{
             fontFamily: 'Inter, sans-serif',
             fontSize: 13,
             lineHeight: 1.55,
@@ -130,7 +130,7 @@ export default function LandingPage() {
             predictive race strategy, dominate the grid with advanced motorsport data.
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center', pointerEvents: 'auto' }}>
+          <div className="landing-hero-cta" style={{ display: 'flex', justifyContent: 'center', pointerEvents: 'auto' }}>
             <Link
               href="/dashboard"
               style={{
@@ -313,8 +313,44 @@ export default function LandingPage() {
           [style*="span 8"], [style*="span 4"] { grid-column: span 12 !important; }
         }
         @media (max-width: 768px) {
+          .landing-hero-copy-wrap {
+            bottom: 26px !important;
+            padding: 0 18px !important;
+          }
+          .landing-hero-title {
+            letter-spacing: 0.05em !important;
+            margin-bottom: 10px !important;
+          }
+          .landing-hero-text {
+            max-width: 300px !important;
+            font-size: 12px !important;
+            line-height: 1.45 !important;
+          }
+          .landing-hero-cta a {
+            padding: 12px 22px !important;
+            font-size: 12px !important;
+            letter-spacing: 0.04em !important;
+          }
           .landing-global-sync { flex-direction: column !important; align-items: flex-start !important; gap: 32px; padding: 32px 24px !important; }
           .landing-global-sync-right { text-align: left !important; }
+        }
+        @media (max-width: 480px) {
+          .landing-hero-copy-wrap {
+            bottom: 18px !important;
+            padding: 0 12px !important;
+          }
+          .landing-hero-title {
+            font-size: 1.15rem !important;
+          }
+          .landing-hero-text {
+            max-width: 260px !important;
+            margin-bottom: 14px !important;
+          }
+          .landing-hero-cta a {
+            width: 100%;
+            max-width: 220px;
+            justify-content: center;
+          }
         }
       `}</style>
     </div>

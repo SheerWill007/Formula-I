@@ -111,6 +111,7 @@ html {
   scrollbar-width: none;
   -ms-overflow-style: none;
   transition: color-scheme 200ms ease;
+  -webkit-text-size-adjust: 100%;
 }
 
 html[data-theme='light'] {
@@ -129,8 +130,10 @@ body {
   text-rendering: optimizeLegibility;
   transition: background-color 200ms ease, color 200ms ease;
   min-height: 100vh;
+  min-height: 100dvh;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 html::-webkit-scrollbar,
@@ -626,7 +629,8 @@ main.landing {
     gap: 8px;
   }
   .topbar-wrapper {
-    padding-left: 88px;
+    padding-left: max(88px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
   }
   .topbar-nav-links {
     display: none;
@@ -726,4 +730,6 @@ main.landing {
     padding: 0 8px;
   }
   .layout-wrapper { padding: 8px 8px 24px; }
+  .topbar-link { font-size: 9px; }
+  .tube-control-btn { width: 30px; height: 30px; }
 }
