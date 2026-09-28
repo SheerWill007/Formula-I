@@ -53,6 +53,31 @@ test.describe('Navigation', () => {
     await expect(bottomNav.getByRole('link', { name: /Dashboard/i })).toBeVisible()
   })
 
+  test('should keep mobile navigation usable without horizontal overflow', async ({ page }) => {
+    for (const width of [320, 375, 390, 412]) {
+      await page.setViewportSize({ width, height: 844 })
+      await page.goto('/')
+
+      const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+      expect(pageWidth, `homepage overflows at ${width}px`).toBeLessThanOrEqual(width)
+
+      const menuButton = page.getByRole('button', { name: 'Open menu' })
+      await expect(menuButton).toBeVisible()
+      await menuButton.click()
+      await expect(page.getByRole('dialog', { name: 'Site navigation' })).toBeVisible()
+      await expect(page.getByRole('dialog').getByRole('link', { name: 'Predictions' })).toBeVisible()
+      await page.keyboard.press('Escape')
+      await expect(page.getByRole('dialog', { name: 'Site navigation' })).toBeHidden()
+    }
+
+    await page.setViewportSize({ width: 1024, height: 768 })
+    await page.goto('/')
+    await expect(page.getByRole('button', { name: 'Open menu' })).toBeHidden()
+    await expect(page.locator('.topbar-nav-links')).toBeVisible()
+    const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+    expect(pageWidth, 'homepage overflows at 1024px').toBeLessThanOrEqual(1024)
+  })
+
   test('should navigate back to home from logo', async ({ page }) => {
     await page.goto('/dashboard')
     
