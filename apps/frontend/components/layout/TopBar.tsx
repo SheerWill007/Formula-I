@@ -4,17 +4,30 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
-import { Volume2, VolumeX, Sun, Moon } from 'lucide-react'
+import { Volume2, Volume1, VolumeX, Sun, Moon } from 'lucide-react'
 import { useMusic } from '@/components/layout/AudioProvider'
 
 export default function TopBar() {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
-  const { isPlaying, toggleMusic } = useMusic()
+  const { isPlaying, volume, setVolume } = useMusic()
   const [mounted, setMounted] = React.useState(false)
+  const [audioMenuOpen, setAudioMenuOpen] = React.useState(false)
 
   React.useEffect(() => {
     setMounted(true)
+  }, [])
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (!target?.closest('.music-volume-menu') && !target?.closest('.sound-toggle')) {
+        setAudioMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [])
 
   const navItems = [
@@ -50,13 +63,21 @@ export default function TopBar() {
 
   const isDark = mounted ? theme === 'dark' : true
 
+  const volumeIcon = volume === 0 ? VolumeX : volume <= 0.5 ? Volume1 : Volume2
+  const VolumeIcon = volumeIcon
+
+  const volumeOptions = [
+    { label: '0% (Mute)', value: 0 },
+    { label: '50%', value: 0.5 },
+    { label: '100%', value: 1 },
+  ]
+
   return (
     <header className="topbar-wrapper">
       <Link href="/" className="corner-brand" aria-label="BoxUp Home">
         BoxUp
       </Link>
       <nav className="topbar-tube">
-        {/* Center Section: Navigation Links */}
         <div className="topbar-nav-links">
           {navItems.map((item) => {
             const isActive = item.active
@@ -72,24 +93,37 @@ export default function TopBar() {
           })}
         </div>
 
-        {/* Right Section: Sound Toggle & Theme Toggle */}
         <div className="topbar-controls">
-          {/* Sound / Music Toggle */}
-          <button
-            type="button"
-            onClick={toggleMusic}
-            aria-label={isPlaying ? 'Mute sound' : 'Play sound'}
-            title={isPlaying ? 'Mute atmospheric sound' : 'Play atmospheric sound'}
-            className={`tube-control-btn sound-toggle ${isPlaying ? 'playing' : ''}`}
-          >
-            {isPlaying ? (
-              <Volume2 size={15} strokeWidth={2.2} />
-            ) : (
-              <VolumeX size={15} strokeWidth={2.2} />
-            )}
-          </button>
+          <div className="music-volume-wrapper">
+            <button
+              type="button"
+              onClick={() => setAudioMenuOpen((open) => !open)}
+              aria-label={isPlaying ? 'Adjust sound volume' : 'Sound is muted'}
+              title="Adjust sound volume"
+              className={`tube-control-btn sound-toggle ${isPlaying ? 'playing' : ''}`}
+            >
+              <VolumeIcon size={15} strokeWidth={2.2} />
+            </button>
 
-          {/* Theme Toggle */}
+            {audioMenuOpen && (
+              <div className="music-volume-menu" role="menu" aria-label="Music volume options">
+                {volumeOptions.map((option) => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    className={`music-volume-option ${volume === option.value ? 'active' : ''}`}
+                    onClick={() => {
+                      setVolume(option.value)
+                      setAudioMenuOpen(false)
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
