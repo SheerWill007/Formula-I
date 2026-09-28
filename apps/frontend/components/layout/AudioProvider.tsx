@@ -2,6 +2,14 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 
+export const VOLUME_SEQUENCE = [0.5, 0, 1] as const
+
+export function getNextVolume(currentVolume: number): number {
+  if (currentVolume === 0.5) return 0
+  if (currentVolume === 0) return 1
+  return 0.5
+}
+
 interface AudioContextType {
   isPlaying: boolean
   volume: number
@@ -10,21 +18,25 @@ interface AudioContextType {
 }
 
 const AudioContext = createContext<AudioContextType>({
-  isPlaying: false,
-  volume: 0,
+  isPlaying: true,
+  volume: 0.5,
   setVolume: () => {},
   toggleMusic: () => {},
 })
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
-  const [volume, setVolumeState] = useState(0)
+  const [volume, setVolumeState] = useState(0.5)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     const audio = new Audio('/landing%20musix.mp3')
     audio.loop = true
-    audio.volume = volume
+    audio.volume = 0.5
     audioRef.current = audio
+
+    void audio.play().catch(() => {
+      // Autoplay policy or fetch error handled gracefully
+    })
 
     return () => {
       audio.pause()
@@ -49,23 +61,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    audio.play().catch(() => {
+    void audio.play().catch(() => {
       // Autoplay policy or fetch error handled gracefully
     })
   }
 
   const toggleMusic = () => {
-    if (volume === 0) {
-      setVolume(0.5)
-      return
-    }
-
-    if (volume === 0.5) {
-      setVolume(1)
-      return
-    }
-
-    setVolume(0)
+    const nextVolume = getNextVolume(volume)
+    setVolume(nextVolume)
   }
 
   return (
