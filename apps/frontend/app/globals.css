@@ -374,6 +374,86 @@ main.landing {
   flex-shrink: 0;
 }
 
+.topbar-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.topbar-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  transform: scale(1.04);
+}
+
+[data-theme='light'] .topbar-menu-btn {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.08);
+  color: #64748B;
+}
+
+[data-theme='light'] .topbar-menu-btn:hover {
+  background: rgba(15, 23, 42, 0.08);
+  color: #0F172A;
+}
+
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.mobile-nav-drawer {
+  width: min(82vw, 320px);
+  height: 100%;
+  background: rgba(9, 12, 18, 0.98);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: -18px 0 42px rgba(2, 6, 23, 0.38);
+  padding: 88px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+[data-theme='light'] .mobile-nav-drawer {
+  background: rgba(255, 255, 255, 0.98);
+  border-left-color: rgba(15, 23, 42, 0.08);
+  box-shadow: -18px 0 24px rgba(15, 23, 42, 0.12);
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--text-2);
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
+  background: rgba(232, 0, 45, 0.08);
+  color: var(--red);
+}
+
 .tube-control-btn {
   display: inline-flex;
   align-items: center;
@@ -621,6 +701,10 @@ main.landing {
 
 /* ── Mobile responsiveness ── */
 @media (max-width: 768px) {
+  .topbar-menu-btn {
+    display: inline-flex;
+  }
+
   .topbar-tube {
     min-width: unset;
     width: 100%;
@@ -635,6 +719,11 @@ main.landing {
   .topbar-nav-links {
     display: none;
   }
+
+  .topbar-controls {
+    margin-left: auto;
+  }
+
   .bottom-nav-inner {
     min-width: unset;
     width: 94%;

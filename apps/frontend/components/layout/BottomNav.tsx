@@ -15,8 +15,17 @@ const NAV = [
 export default function BottomNav() {
   const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const lastScrollY = useRef(0)
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)')
+    const syncMobile = () => setIsMobile(media.matches)
+    syncMobile()
+    media.addEventListener('change', syncMobile)
+    return () => media.removeEventListener('change', syncMobile)
+  }, [])
 
   useEffect(() => {
     const hideNavigation = () => {
@@ -39,6 +48,8 @@ export default function BottomNav() {
       if (hideTimer.current) clearTimeout(hideTimer.current)
     }
   }, [])
+
+  const showNav = isMobile || isVisible
 
   return (
     <nav
