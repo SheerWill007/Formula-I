@@ -17,9 +17,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    // Check if background music audio element is available
-    // High quality royalty-free atmospheric synth ambient track
-    const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=ambient-piano-amp-strings-10711.mp3')
+    // Use the local website music file across the app.
+    const audio = new Audio('/landing%20musix.mp3')
     audio.loop = true
     audio.volume = 0.35
     audioRef.current = audio
