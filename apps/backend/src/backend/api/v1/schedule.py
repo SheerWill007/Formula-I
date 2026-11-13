@@ -1,15 +1,15 @@
 """
 schedule.py — /api/v1/schedule/*
-Serves 2026 F1 calendar with session times.
-FastF1 schedule is loaded ONCE at import time and cached in memory.
+Serves the F1 calendar for any season with session times.
+FastF1 schedules are cached in memory per requested year.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
 from functools import lru_cache
 
-import fastf1
 from flask import Blueprint, jsonify
 
 log = logging.getLogger(__name__)
@@ -79,19 +79,21 @@ CIRCUIT_NAMES: dict[str, str] = {
 }
 
 
-@lru_cache(maxsize=1)
-def _load_schedule() -> list[dict]:
+@lru_cache(maxsize=8)
+def _load_schedule(year: int) -> list[dict]:
     """
-    Load FastF1 2026 schedule ONCE. lru_cache means this only runs on the
-    first call — every subsequent call returns the cached result instantly.
+    Load the FastF1 schedule for a given season. lru_cache means each year
+    is only fetched once — every subsequent call returns the cached result.
     """
-    log.info("Loading 2026 F1 schedule from FastF1 (first call only)...")
+    log.info("Loading %s F1 schedule from FastF1 (first call for this year)...", year)
+    import fastf1  # heavy — kept out of boot path; only loaded when first needed
+
     try:
         fastf1.Cache.enable_cache("/tmp/fastf1_cache")
     except Exception:
         pass  # cache optional
 
-    sched = fastf1.get_event_schedule(2026, include_testing=False)
+    sched = fastf1.get_event_schedule(year, include_testing=False)
     races = []
 
     for _, row in sched.iterrows():
@@ -109,6 +111,7 @@ def _load_schedule() -> list[dict]:
             if s_date is not None and str(s_date) != "NaT":
                 try:
                     import pandas as pd
+
                     ts = pd.Timestamp(s_date)
                     if ts.tzinfo is None:
                         ts = ts.tz_localize("UTC")
@@ -145,6 +148,10 @@ def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _current_year() -> int:
+    return datetime.now(timezone.utc).year
+
+
 def _find_next_session(races: list[dict]) -> tuple[dict | None, dict | None]:
     """Return (race, session) for the upcoming or currently active session."""
     now = _now_utc()
@@ -173,21 +180,25 @@ def _find_next_session(races: list[dict]) -> tuple[dict | None, dict | None]:
 # Endpoints
 # ---------------------------------------------------------------------------
 
-@lru_cache(maxsize=1)
+
+@lru_cache(maxsize=8)
 def _load_results(year: int) -> dict[int, list[str]]:
     """Fetch Top 3 finishers for all rounds of the season."""
     log.info(f"Loading {year} race results from Ergast...")
     try:
         from fastf1.ergast import Ergast
+
         ergast = Ergast()
         # Get all race results for the season
-        results = ergast.get_race_results(season=year, result_type='raw')
-        
+        results = ergast.get_race_results(season=year, result_type="raw")
+
         round_results = {}
         for round_data in results:
             r_num = int(round_data.get("round", 0))
             drivers = round_data.get("Results", [])[:3]
-            round_results[r_num] = [d.get("Driver", {}).get("code", "???") for d in drivers]
+            round_results[r_num] = [
+                d.get("Driver", {}).get("code", "???") for d in drivers
+            ]
         return round_results
     except Exception as e:
         log.warning(f"Failed to load race results: {e}")
@@ -200,7 +211,7 @@ def next_race():
     Returns the next upcoming race weekend + which session is next.
     Used by the home page countdown card.
     """
-    races = _load_schedule()
+    races = _load_schedule(_current_year())
     next_race_data, next_session = _find_next_session(races)
 
     # Fallback: if session-level lookup fails, return the next race day that is
@@ -211,6 +222,7 @@ def next_race():
         for race in races:
             try:
                 from datetime import datetime as dt
+
                 race_date_str = race["event_date"]
                 race_dt = dt.fromisoformat(str(race_date_str).split(" ")[0])
                 if race_dt.date() > now.date():
@@ -230,13 +242,19 @@ def next_race():
     )
 
 
-@schedule_bp.route("/schedule/2026", methods=["GET"])
-def full_schedule():
+@schedule_bp.route("/schedule/current", methods=["GET"])
+def current_schedule():
+    """Returns the current season's calendar."""
+    return full_schedule(_current_year())
+
+
+@schedule_bp.route("/schedule/<int:year>", methods=["GET"])
+def full_schedule(year: int):
     """
-    Returns the complete 2026 F1 calendar enrichment with Top 3 winners.
+    Returns the complete F1 calendar for the given season with Top 3 winners.
     """
-    races = _load_schedule()
-    results = _load_results(2026)
+    races = _load_schedule(year)
+    results = _load_results(year)
     now = _now_utc()
 
     # Tag each race as past / current / upcoming
@@ -244,6 +262,7 @@ def full_schedule():
     for race in races:
         try:
             from datetime import datetime as dt
+
             race_dt = dt.fromisoformat(str(race["event_date"]).split(" ")[0])
             if race_dt.date() < now.date():
                 status = "past"
@@ -258,4 +277,4 @@ def full_schedule():
         race_results = results.get(race["round"], [])
         enriched.append({**race, "status": status, "top_finishers": race_results})
 
-    return jsonify({"season": 2026, "total_rounds": len(enriched), "races": enriched})
+    return jsonify({"season": year, "total_rounds": len(enriched), "races": enriched})

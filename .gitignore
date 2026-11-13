@@ -44,3 +44,13 @@ Thumbs.db
 
 # Agent files
 docs/agent
+
+# Local Claude Code launch config
+.claude/
+
+# Agent eval run outputs
+apps/backend/evals/results/
+strategy_documents/
+
+# Source copy of the Slipstream project (already merged into apps/ and packages/)
+Slipstream/

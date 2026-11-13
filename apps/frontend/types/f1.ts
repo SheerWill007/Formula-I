@@ -295,4 +295,58 @@ export interface RaceIntelligenceEventsResponse {
   session_key: number
   event_count: number
   events: RaceIntelligenceEvent[]
+}export interface DriverProfile {
+  code: string
+  identity: {
+    driver_number: number
+    full_name: string
+    abbreviation: string
+    team_name: string | null
+    team_colour: string | null
+    headshot_url: string | null
+  } | null
+  career: {
+    grands_prix: number
+    wins: number
+    podiums: number
+    poles: number
+    career_points: number
+    seasons: number
+    first_season: number | null
+    last_season: number | null
+  } | null
+  recent_races: {
+    year: number
+    round: number
+    race_name: string | null
+    race_date: string | null
+    constructor_name: string | null
+    grid: number | null
+    position: number | null
+    position_text: string | null
+    points: number | null
+    status: string | null
+  }[]
+  style: ({ season: number; archetype: string | null } & Record<string, number | string | null>) | null
+  seasons: {
+    year: number
+    races: number
+    wins: number
+    podiums: number
+    points: number
+    avg_finish: number | null
+    avg_grid: number | null
+    team: string | null
+  }[]
+  results_grid: {
+    year: number
+    round: number
+    race_name: string | null
+    grid: number | null
+    position: number | null
+    points: number
+    status: string | null
+  }[]
+  /** Per-season percentile (0 worst, 1 best) of each radar axis against the grid. */
+  style_history: ({ season: number } & Record<string, number | null>)[]
 }

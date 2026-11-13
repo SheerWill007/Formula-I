@@ -291,10 +291,12 @@ def compute_stats_for_session(session_key: int) -> int:
             (row["driver_number"], row["lap_number"]): dict(row)
             for row in artifact_driver_laps
         }
-        driver_laps_by_key.update({
-            (row["driver_number"], row["lap_number"]): dict(row)
-            for row in db_driver_laps
-        })
+        driver_laps_by_key.update(
+            {
+                (row["driver_number"], row["lap_number"]): dict(row)
+                for row in db_driver_laps
+            }
+        )
         driver_laps = list(driver_laps_by_key.values())
 
         if not driver_laps:

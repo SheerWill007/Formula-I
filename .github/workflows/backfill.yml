@@ -1,0 +1,130 @@
+name: Backfill Sessions
+
+# One-off / on-demand historical backfill of F1 sessions into the hosted
+# database. Sibling of ingest.yml: ingestion runs on the GitHub runner against
+# Neon (OpenF1 fallback when FastF1 is blocked), optional telemetry artifacts go
+# to R2, and the model is retrained on the runner and published to Postgres.
+#
+# Runs one matrix job per year (max 2 in parallel to be gentle on Neon free
+# tier) so a large range stays inside the per-job timeout. The backfill is
+# resumable — already-ingested sessions are skipped — so re-running is safe.
+#
+# Required repository secret: DATABASE_URL
+# Optional: TELEMETRY_ARTIFACT_BUCKET, R2_ENDPOINT_URL, R2_ACCESS_KEY_ID,
+#   R2_SECRET_ACCESS_KEY (raw telemetry traces in Cloudflare R2)
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: "Start year (inclusive)"
+        required: true
+        default: "2023"
+      end_year:
+        description: "End year (inclusive)"
+        required: true
+        default: "2025"
+      skip_telemetry:
+        description: "Metadata only (skip lap telemetry)"
+        type: boolean
+        required: false
+        default: false
+      retrain:
+        description: "Retrain the model after backfill"
+        type: boolean
+        required: false
+        default: true
+
+concurrency:
+  group: backfill
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      years: ${{ steps.gen.outputs.years }}
+    steps:
+      - name: Compute year list
+        id: gen
+        env:
+          START: ${{ inputs.start_year }}
+          END: ${{ inputs.end_year }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          start = int(os.environ["START"])
+          end = int(os.environ["END"])
+          if end < start:
+              raise SystemExit("end_year must be >= start_year")
+          print("years=" + json.dumps(list(range(start, end + 1))))
+          PY
+
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Apply database migrations
+        run: uv run alembic -c apps/backend/alembic.ini upgrade head
+
+  backfill:
+    needs: [plan, migrate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        year: ${{ fromJSON(needs.plan.outputs.years) }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TELEMETRY_STORAGE_MODE: files
+      TELEMETRY_ARTIFACT_BACKEND: ${{ secrets.R2_ENDPOINT_URL != '' && 'r2' || 'local' }}
+      TELEMETRY_ARTIFACT_BUCKET: ${{ secrets.TELEMETRY_ARTIFACT_BUCKET }}
+      R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      FASTF1_CACHE_DIR: /tmp/fastf1_cache
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Backfill ${{ matrix.year }}
+        run: |
+          uv run python -m ingestion.backfill \
+            --start-year ${{ matrix.year }} \
+            --end-year ${{ matrix.year }} \
+            ${{ inputs.skip_telemetry && '--skip-telemetry' || '' }}
+
+  train:
+    needs: backfill
+    if: ${{ always() && inputs.retrain }}
+    uses: ./.github/workflows/train.yml
+    secrets: inherit

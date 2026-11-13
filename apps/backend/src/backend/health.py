@@ -6,6 +6,7 @@ GET /health → {"status": "ok", "database": "ok", "version": "0.1.0"}
 Used by Docker, load balancers, and monitoring tools to check if
 the service is alive and its dependencies are reachable.
 """
+
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 
@@ -25,10 +26,12 @@ def health():
         db_status = "unreachable"
 
     status = "ok" if db_status == "ok" else "degraded"
-    code   = 200  if db_status == "ok" else 503
+    code = 200 if db_status == "ok" else 503
 
-    return jsonify({
-        "status":   status,
-        "database": db_status,
-        "version":  "0.1.0",
-    }), code
+    return jsonify(
+        {
+            "status": status,
+            "database": db_status,
+            "version": "0.1.0",
+        }
+    ), code

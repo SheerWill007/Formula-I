@@ -1,21 +1,10 @@
 import React from 'react'
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+// The root layout already renders <main>; this only constrains the width.
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#FAFAFA' }}>
-      <main style={{
-        padding: '32px 40px',
-        minHeight: '100vh',
-        background: '#FAFAFA',
-      }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          {children}
-        </div>
-      </main>
+    <div className="dashboard-shell" style={{ padding: '32px 24px', maxWidth: 1248, margin: '0 auto' }}>
+      {children}
     </div>
   )
 }

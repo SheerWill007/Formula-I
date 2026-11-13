@@ -1,25 +1,19 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+"""
+ML configuration via pydantic-settings.
+
+Shared values (database, MLflow, telemetry artifacts) come from
+``slipstream_config.CommonSettings``; this module adds only the ML service's
+own settings.
+"""
+
+from __future__ import annotations
+
+from slipstream_config import CommonSettings
 
 
-class Settings(BaseSettings):
-    database_url:        str = "postgresql+psycopg://pitwall:pitwall@localhost:5432/pitwall"
-    mlflow_tracking_uri: str = "http://localhost:5001"
-    model_name:          str = "boxup-race-predictor"
-    telemetry_artifact_dir: str = "./telemetry_artifacts"
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore",
-    )
-
-    @property
-    def db_url(self) -> str:
-        url = self.database_url
-        if url.startswith("postgres://"):
-            url = url.replace("postgres://", "postgresql+psycopg://", 1)
-        elif url.startswith("postgresql://") and "+psycopg" not in url:
-            url = url.replace("postgresql://", "postgresql+psycopg://", 1)
-        return url
+class Settings(CommonSettings):
+    model_name: str = "slipstream-race-predictor"
+    ml_models_dir: str = "./ml_models"
 
 
 settings = Settings()

@@ -1,11 +1,12 @@
 """Celery task: retrain ML model after new race data is ingested."""
+
 from workers.celery_app import app
 import structlog
 
 log = structlog.get_logger()
 
 
-@app.task(name='workers.tasks.train.retrain_model')
+@app.task(name="workers.tasks.train.retrain_model")
 def retrain_model():
     """
     Retrain the FLAML race prediction model on all available data.
@@ -16,8 +17,7 @@ def retrain_model():
 
     log.info("task.train.start")
     result = subprocess.run(
-        [sys.executable, '-m', 'ml.train'],
-        capture_output=True, text=True
+        [sys.executable, "-m", "ml.train"], capture_output=True, text=True
     )
 
     if result.returncode != 0:

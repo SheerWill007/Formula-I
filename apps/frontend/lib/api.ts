@@ -1,5 +1,5 @@
 import type {
-  Session, Driver, Lap, FastestLap, DriverComparison, HealthStatus
+  Session, Driver, Lap, FastestLap, DriverComparison, HealthStatus, DriverProfile
 } from '@/types/f1'
 
 const BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/+$/, '')
@@ -51,6 +51,8 @@ export const api = {
       get<DriverComparison[]>(
         `/api/v1/sessions/${key}/drivers/compare?drivers=${drivers.join(',')}`
       ),
+    profile: (code: string) =>
+      get<DriverProfile>(`/api/v1/drivers/${encodeURIComponent(code)}/profile`),
   },
 }
 

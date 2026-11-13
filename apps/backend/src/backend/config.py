@@ -1,66 +1,83 @@
 """
 Backend configuration via pydantic-settings.
-Reads from environment variables. Falls back to .env file locally.
+
+Shared values (database, Redis, Kafka, MLflow, R2/telemetry) are defined once
+in ``slipstream_config.CommonSettings``; this module adds only the backend's
+own settings. Every value is read from the environment first (then a local
+.env file). In production (FLASK_ENV=production) missing secrets or a
+localhost DATABASE_URL fail fast instead of silently using insecure defaults.
 """
+
 from __future__ import annotations
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from typing import Literal
+
+from pydantic import model_validator
+from slipstream_config import DEV_SECRET_KEY, CommonSettings
 
 
-class Settings(BaseSettings):
+class Settings(CommonSettings):
     # Flask
-    secret_key: str = "dev-secret-change-in-production"
+    secret_key: str = DEV_SECRET_KEY
     debug: bool = False
     testing: bool = False
-
-    # Database — Railway injects DATABASE_URL as postgres:// so we normalise it
-    database_url: str = "postgresql+psycopg://pitwall:pitwall@localhost:5432/pitwall"
-
-    # Redis + Kafka — optional, not required for core app
-    redis_url: str = "redis://localhost:6379/0"
-    kafka_bootstrap_servers: str = "localhost:9092"
-
-    # MLflow
-    mlflow_tracking_uri: str = "http://localhost:5001"
-
-    # Raw telemetry artifacts. In cheap hosted deployments, Postgres stores
-    # only metadata while compressed lap traces live outside the DB.
-    telemetry_artifact_dir: str = "./telemetry_artifacts"
-    telemetry_artifact_backend: str = "local"
-    telemetry_artifact_bucket: str = ""
-    r2_endpoint_url: str = ""
-    r2_access_key_id: str = ""
-    r2_secret_access_key: str = ""
 
     race_vector_index_dir: str = "./lancedb"
     race_vector_table: str = "race_intelligence_events"
 
-    # Auto-ingest scheduler for single-service deploys like Railway
-    auto_ingest_enabled: bool = True
-    auto_ingest_on_startup: bool = True
-    auto_ingest_interval_minutes: int = 60
+    # Task 8 -- Cloudflare Vectorize retrieval for strategy documents.
+    # When the account/token/index are unset the vector adapter falls back to a
+    # local LanceDB table (development only); production uses Vectorize.
+    cloudflare_account_id: str = ""
+    cloudflare_vectorize_api_token: str = ""
+    cloudflare_vectorize_index: str = ""
+    strategy_vector_table: str = "strategy_document_chunks"
+    strategy_retrieval_limit: int = 6
 
-    # CORS — comma-separated list of allowed origins.
-    # Defaults to wildcard; set to your frontend URL in production.
-    cors_origins: list[str] = ["*"]
+    # Embedding provider (OpenAI-compatible). Without a key a deterministic
+    # local hash embedding of the configured dimension is used for dev/tests.
+    embedding_provider: str = "openai"
+    embedding_api_key: str = ""
+    embedding_base_url: str = "https://api.openai.com/v1"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimensions: int = 1536
+    embedding_timeout_seconds: int = 30
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_routing_model: str = "openai/gpt-4o-mini"
+    openrouter_final_model: str = "openai/gpt-4o-mini"
+    openrouter_capable_model: str = "openai/gpt-4o-mini"
+    openrouter_timeout_seconds: int = 30
+    agent_free_daily_limit: int = 10
+    agent_max_conversations: int = 3
+    agent_max_question_chars: int = 500
+    cors_origins: str = "http://localhost:3000"
+    # Optional regex for extra allowed origins (e.g. Vercel preview deploys).
+    cors_origin_regex: str = ""
+    outbound_allowed_hosts: str = "openrouter.ai,api.openai.com,api.cloudflare.com"
+    agent_free_daily_cost_usd: float = 0.30
+    llm_breaker_failure_threshold: int = 3
+    llm_breaker_open_timeout_seconds: int = 60
 
-    @property
-    def db_url(self) -> str:
-        """
-        Normalise DATABASE_URL for SQLAlchemy.
-        Railway provides postgres:// but SQLAlchemy needs postgresql+psycopg://
-        """
-        url = self.database_url
-        if url.startswith("postgres://"):
-            url = url.replace("postgres://", "postgresql+psycopg://", 1)
-        elif url.startswith("postgresql://") and "+psycopg" not in url:
-            url = url.replace("postgresql://", "postgresql+psycopg://", 1)
-        return url
+    agent_planner_mode: Literal["template", "llm"] = "template"
+
+    # Analyst engine (backend.analyst): tool-calling loop + sandboxed Python
+    analyst_model: str = "openai/gpt-4o-mini"
+    analyst_max_steps: int = 10
+    analyst_max_cost_usd: float = 0.03
+    analyst_sandbox_timeout_seconds: int = 20
+
+    clerk_issuer: str = ""
+    clerk_admin_user_ids: str = ""
+
+    @model_validator(mode="after")
+    def _reject_dev_secret_in_production(self) -> "Settings":
+        if self.flask_env.lower() == "production" and self.secret_key == DEV_SECRET_KEY:
+            raise ValueError(
+                "SECRET_KEY must be set in production (refusing the dev default)"
+            )
+        return self
 
 
 settings = Settings()

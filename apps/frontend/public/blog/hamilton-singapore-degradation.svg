@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="380" viewBox="0 0 720 380" role="img" aria-labelledby="t d"><title id="t">Hamilton, fuel-corrected lap times by stint, Singapore 2026</title><desc id="d">Scatter of fuel-corrected lap times per lap with a fitted line for each stint. Medium stint slope +0.045 s per lap, Soft stint +0.112 s per lap.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="64" x2="696" y1="332.0" y2="332.0" stroke="#eceeea"/><text x="56" y="336.0" font-size="12" text-anchor="end" fill="#6b7478">94.5</text>
+<line x1="64" x2="696" y1="254.0" y2="254.0" stroke="#eceeea"/><text x="56" y="258.0" font-size="12" text-anchor="end" fill="#6b7478">96.5</text>
+<line x1="64" x2="696" y1="176.0" y2="176.0" stroke="#eceeea"/><text x="56" y="180.0" font-size="12" text-anchor="end" fill="#6b7478">98.5</text>
+<line x1="64" x2="696" y1="98.0" y2="98.0" stroke="#eceeea"/><text x="56" y="102.0" font-size="12" text-anchor="end" fill="#6b7478">100.5</text>
+<line x1="64" x2="696" y1="20.0" y2="20.0" stroke="#eceeea"/><text x="56" y="24.0" font-size="12" text-anchor="end" fill="#6b7478">102.5</text>
+<text x="74.2" y="352" font-size="12" text-anchor="middle" fill="#6b7478">2</text>
+<text x="125.2" y="352" font-size="12" text-anchor="middle" fill="#6b7478">7</text>
+<text x="176.1" y="352" font-size="12" text-anchor="middle" fill="#6b7478">12</text>
+<text x="227.1" y="352" font-size="12" text-anchor="middle" fill="#6b7478">17</text>
+<text x="278.1" y="352" font-size="12" text-anchor="middle" fill="#6b7478">22</text>
+<text x="329.0" y="352" font-size="12" text-anchor="middle" fill="#6b7478">27</text>
+<text x="380.0" y="352" font-size="12" text-anchor="middle" fill="#6b7478">32</text>
+<text x="431.0" y="352" font-size="12" text-anchor="middle" fill="#6b7478">37</text>
+<text x="481.9" y="352" font-size="12" text-anchor="middle" fill="#6b7478">42</text>
+<text x="532.9" y="352" font-size="12" text-anchor="middle" fill="#6b7478">47</text>
+<text x="583.9" y="352" font-size="12" text-anchor="middle" fill="#6b7478">52</text>
+<text x="634.8" y="352" font-size="12" text-anchor="middle" fill="#6b7478">57</text>
+<text x="685.8" y="352" font-size="12" text-anchor="middle" fill="#6b7478">62</text>
+<text x="380.0" y="372" font-size="12" text-anchor="middle" fill="#6b7478">Lap</text>
+<text x="16" y="176.0" font-size="12" text-anchor="middle" fill="#6b7478" transform="rotate(-90 16 176.0)">Fuel-corrected lap time (s)</text>
+<circle cx="74.2" cy="276.6" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="84.4" cy="293.6" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="94.6" cy="292.0" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="104.8" cy="295.4" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="115.0" cy="295.3" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="125.2" cy="300.7" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="155.7" cy="312.5" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="165.9" cy="301.0" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="176.1" cy="302.0" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="186.3" cy="288.6" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="196.5" cy="278.9" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="206.7" cy="280.0" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="216.9" cy="267.3" r="3" fill="#d9822b" fill-opacity=".55"/>
+<circle cx="227.1" cy="237.7" r="3" fill="#d9822b" fill-opacity=".55"/>
+<line x1="74.2" y1="300.6" x2="227.1" y2="274.4" stroke="#d9822b" stroke-width="2.4"/>
+<circle cx="257.7" cy="266.7" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="267.9" cy="304.8" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="278.1" cy="305.9" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="288.3" cy="307.6" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="298.5" cy="298.7" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="308.6" cy="233.6" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="318.8" cy="295.0" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="329.0" cy="295.3" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="339.2" cy="303.9" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="349.4" cy="292.5" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="359.6" cy="286.2" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="369.8" cy="243.7" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="380.0" cy="272.1" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="390.2" cy="270.5" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="400.4" cy="278.6" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="410.6" cy="281.9" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="420.8" cy="273.3" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="431.0" cy="269.2" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="441.2" cy="272.8" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="481.9" cy="236.4" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="492.1" cy="256.8" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="502.3" cy="248.7" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="512.5" cy="245.9" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="522.7" cy="192.1" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="532.9" cy="223.7" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="543.1" cy="221.1" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="553.3" cy="240.3" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="563.5" cy="231.1" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="573.7" cy="232.2" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="583.9" cy="210.3" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="594.1" cy="170.8" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="614.5" cy="67.6" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="624.6" cy="164.9" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="634.8" cy="180.6" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="645.0" cy="168.8" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="655.2" cy="179.1" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="665.4" cy="131.4" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="675.6" cy="39.5" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<circle cx="685.8" cy="94.6" r="3" fill="#3d7f8a" fill-opacity=".55"/>
+<line x1="257.7" y1="323.0" x2="685.8" y2="140.8" stroke="#3d7f8a" stroke-width="2.4"/>
+<circle cx="76" cy="34" r="5" fill="#d9822b"/><text x="88" y="38" font-size="13" fill="#1f2a2e">Medium stint: +0.045 s/lap (r² 0.23)</text>
+<circle cx="76" cy="54" r="5" fill="#3d7f8a"/><text x="88" y="58" font-size="13" fill="#1f2a2e">Soft stint: +0.112 s/lap (r² 0.72)</text>
+</svg>

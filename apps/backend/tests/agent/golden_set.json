@@ -1,0 +1,365 @@
+{
+  "_comment": "T0.1 -- Golden evaluation set. Every planner change (hardcoded or LLM) is checked against these before shipping. expected_intent + expected_tools reflect what the CURRENT hardcoded build_dag() in orchestrator.py does. min_evidence_fields lists the output-dataclass fields that verify_evidence / compose needs present to produce a grounded answer. covered_intents: 12 non-UNSUPPORTED, each with 3+ entries, plus multi-intent questions that T1.1 is meant to newly handle.",
+  "questions": [
+    {
+      "question": "Why did Hamilton pit so early at Monaco in 2026?",
+      "expected_intent": "pit_stop_speed_delta",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "get_lap_telemetry_artifacts", "compute_speed_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "artifacts", "speed_window"]
+    },
+    {
+      "question": "Was Hamilton faster after his pit stop or before at Monaco?",
+      "expected_intent": "pit_stop_speed_delta",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "get_lap_telemetry_artifacts", "compute_speed_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "speed_window"]
+    },
+    {
+      "question": "How much time did Hamilton gain or lose through the undercut at Silverstone?",
+      "expected_intent": "pit_stop_speed_delta",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "get_lap_telemetry_artifacts", "compute_speed_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "speed_window"]
+    },
+    {
+      "question": "Did Hamilton's pit stop strategy pay off at Spa?",
+      "expected_intent": "pit_stop_speed_delta",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "get_lap_telemetry_artifacts", "compute_speed_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "speed_window"]
+    },
+    {
+      "question": "Compare Hamilton's pace before and after stopping at Bahrain.",
+      "expected_intent": "pit_stop_speed_delta",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "get_lap_telemetry_artifacts", "compute_speed_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "speed_window"]
+    },
+    {
+      "question": "What happened to Hamilton on lap 34 at Monaco in 2026?",
+      "expected_intent": "lap_event_investigation",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events"]
+    },
+    {
+      "question": "Why was Hamilton so slow on lap 12 at Silverstone?",
+      "expected_intent": "lap_event_investigation",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events"]
+    },
+    {
+      "question": "Was there an off-track moment for Hamilton during qualifying at Spa?",
+      "expected_intent": "lap_event_investigation",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events"]
+    },
+    {
+      "question": "Which lap did Hamilton lose the most time in the Monaco race?",
+      "expected_intent": "lap_event_investigation",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events"]
+    },
+    {
+      "question": "Explain why Hamilton's lap 20 was so quick at Bahrain.",
+      "expected_intent": "lap_event_investigation",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events"]
+    },
+    {
+      "question": "How bad was Hamilton's tyre degradation at Silverstone?",
+      "expected_intent": "tyre_degradation_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "Which driver managed their tyres the best at Suzuka?",
+      "expected_intent": "tyre_degradation_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "Did Hamilton's tyres fall off a cliff at the end of the stint in Monaco?",
+      "expected_intent": "tyre_degradation_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "How much did Hamilton's pace drop per lap late in the Bahrain stint?",
+      "expected_intent": "tyre_degradation_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "Compare Hamilton and teammate tyre degradation at Spa.",
+      "expected_intent": "tyre_degradation_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "Compare Hamilton's telemetry against Russell at Monaco.",
+      "expected_intent": "telemetry_comparison",
+      "expected_tools": ["resolve_session", "resolve_driver", "resolve_driver", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "telemetry"]
+    },
+    {
+      "question": "Who was faster through the final sector, Hamilton or Verstappen?",
+      "expected_intent": "telemetry_comparison",
+      "expected_tools": ["resolve_session", "resolve_driver", "resolve_driver", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "telemetry"]
+    },
+    {
+      "question": "Compare Hamilton's and Leclerc's braking into turn 1 at Spa.",
+      "expected_intent": "telemetry_comparison",
+      "expected_tools": ["resolve_session", "resolve_driver", "resolve_driver", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "telemetry"]
+    },
+    {
+      "question": "Was Hamilton quicker than Russell out of the final corner at Silverstone?",
+      "expected_intent": "telemetry_comparison",
+      "expected_tools": ["resolve_session", "resolve_driver", "resolve_driver", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "telemetry"]
+    },
+    {
+      "question": "Compare the telemetry of Hamilton and Norris on their best Monaco laps.",
+      "expected_intent": "telemetry_comparison",
+      "expected_tools": ["resolve_session", "resolve_driver", "resolve_driver", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "telemetry"]
+    },
+    {
+      "question": "How big was the gap between first and second at the end of Monaco?",
+      "expected_intent": "position_gap_tracking",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "gap_position_snapshot", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "gap_position"]
+    },
+    {
+      "question": "When did Hamilton take the lead of the Silverstone race?",
+      "expected_intent": "position_gap_tracking",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "gap_position_snapshot", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "gap_position"]
+    },
+    {
+      "question": "What was the gap between Hamilton and the car ahead at the pit stop?",
+      "expected_intent": "position_gap_tracking",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "gap_position_snapshot", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "gap_position"]
+    },
+    {
+      "question": "Did Hamilton hold position through the pit stop window at Spa?",
+      "expected_intent": "position_gap_tracking",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "gap_position_snapshot", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "gap_position"]
+    },
+    {
+      "question": "Were there any safety car periods during the Monaco race?",
+      "expected_intent": "race_control_events",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_race_control_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "race_control"]
+    },
+    {
+      "question": "What caused the red flag at Silverstone?",
+      "expected_intent": "race_control_events",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_race_control_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "race_control"]
+    },
+    {
+      "question": "How long was the virtual safety car at Bahrain?",
+      "expected_intent": "race_control_events",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_race_control_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "race_control"]
+    },
+    {
+      "question": "Was there a safety car during Hamilton's pit stop at Spa?",
+      "expected_intent": "race_control_events",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_race_control_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "race_control"]
+    },
+    {
+      "question": "Show me Hamilton's best qualifying lap at Monaco.",
+      "expected_intent": "qualifying_lap_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events", "telemetry"]
+    },
+    {
+      "question": "What sector times did Hamilton set in Q3 at Spa?",
+      "expected_intent": "qualifying_lap_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events", "telemetry"]
+    },
+    {
+      "question": "How fast was Hamilton's pole lap at Silverstone?",
+      "expected_intent": "qualifying_lap_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events", "telemetry"]
+    },
+    {
+      "question": "Analyze Hamilton's final qualifying run at Bahrain.",
+      "expected_intent": "qualifying_lap_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "inspect_lap_events", "telemetry_inspector", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "lap_events", "telemetry"]
+    },
+    {
+      "question": "What did Hamilton's engineer say before the pit stop in Monaco 2026?",
+      "expected_intent": "team_radio",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_radio_messages", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "team_radio"]
+    },
+    {
+      "question": "What team radio message did Hamilton get after the safety car?",
+      "expected_intent": "team_radio",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_radio_messages", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "team_radio"]
+    },
+    {
+      "question": "What did Hamilton's engineer say during the pit window at Spa?",
+      "expected_intent": "team_radio",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_radio_messages", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "team_radio"]
+    },
+    {
+      "question": "Was Hamilton told about the rain over team radio at Silverstone?",
+      "expected_intent": "team_radio",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_radio_messages", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "team_radio"]
+    },
+    {
+      "question": "Was it raining when Hamilton pitted in Monaco 2026?",
+      "expected_intent": "weather_correlation",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_weather_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "weather"]
+    },
+    {
+      "question": "What was the track temperature during the pit stops at Silverstone?",
+      "expected_intent": "weather_correlation",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_weather_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "weather"]
+    },
+    {
+      "question": "Did rain reach the track during Hamilton's stint at Spa?",
+      "expected_intent": "weather_correlation",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_weather_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "weather"]
+    },
+    {
+      "question": "How much rain fell during the Bahrain race?",
+      "expected_intent": "weather_correlation",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_weather_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "weather"]
+    },
+    {
+      "question": "Did changing weather affect Hamilton's strategy at Suzuka?",
+      "expected_intent": "weather_correlation",
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_weather_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "weather"]
+    },
+    {
+      "question": "Did rain affect how much Hamilton's tyres degraded at Spa?",
+      "expected_intent": "tyre_degradation_analysis",
+      "multi_intent": true,
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "Was Hamilton's early pit stop at Monaco caused by a safety car?",
+      "expected_intent": "race_control_events",
+      "multi_intent": true,
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "fetch_race_control_window", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "race_control"]
+    },
+    {
+      "question": "Was a late safety car the reason Hamilton lost the lead at Silverstone?",
+      "expected_intent": "position_gap_tracking",
+      "multi_intent": true,
+      "expected_tools": ["resolve_session", "resolve_driver", "find_pit_stops", "gap_position_snapshot", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "pit_stops", "gap_position"]
+    },
+    {
+      "question": "Did the track temperature explain Hamilton's tyre degradation at Suzuka?",
+      "expected_intent": "tyre_degradation_analysis",
+      "multi_intent": true,
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "Did Verstappen's radio message about the tyres link to his degradation?",
+      "expected_intent": "tyre_degradation_analysis",
+      "multi_intent": true,
+      "expected_tools": ["resolve_session", "resolve_driver", "stint_degradation_scanner", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "stint_degradation"]
+    },
+    {
+      "question": "How does Hamilton's driving style compare to Verstappen's across the 2026 season?",
+      "expected_intent": "driver_style_comparison",
+      "expected_tools": ["driver_style_compare"],
+      "min_evidence_fields": ["driver_style"]
+    },
+    {
+      "question": "Which driver is more aggressive on the brakes, Hamilton or Leclerc?",
+      "expected_intent": "driver_style_comparison",
+      "expected_tools": ["driver_style_compare"],
+      "min_evidence_fields": ["driver_style"]
+    },
+    {
+      "question": "Compare the qualifying pace traits of Norris and Verstappen.",
+      "expected_intent": "driver_style_comparison",
+      "expected_tools": ["driver_style_compare"],
+      "min_evidence_fields": ["driver_style"]
+    },
+    {
+      "question": "Which races do you have telemetry for in 2026?",
+      "expected_intent": "data_availability",
+      "routed_params": {"gp_name": null},
+      "expected_tools": ["list_available_sessions", "describe_session_coverage"],
+      "min_evidence_fields": ["sessions"]
+    },
+    {
+      "question": "Do you have data for the Monaco Grand Prix?",
+      "expected_intent": "data_availability",
+      "expected_tools": ["search_sessions", "describe_session_coverage"],
+      "min_evidence_fields": ["sessions", "coverage"]
+    },
+    {
+      "question": "What sessions are available for Silverstone?",
+      "expected_intent": "data_availability",
+      "routed_params": {"gp_name": "Silverstone"},
+      "expected_tools": ["search_sessions", "describe_session_coverage"],
+      "min_evidence_fields": ["sessions", "coverage"]
+    },
+    {
+      "question": "Should Hamilton pit now or stay out at Monaco?",
+      "expected_intent": "strategy_analysis",
+      "expected_tools": ["resolve_session", "resolve_driver", "compare_strategy_scenarios", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "strategy"]
+    },
+    {
+      "question": "What is the pit loss at Silverstone for Hamilton?",
+      "expected_intent": "strategy_analysis",
+      "routed_params": {"gp_name": "Silverstone"},
+      "expected_tools": ["resolve_session", "resolve_driver", "compare_strategy_scenarios", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "strategy"]
+    },
+    {
+      "question": "Was it worth pitting early? Compare the strategy scenarios for Hamilton at Spa.",
+      "expected_intent": "strategy_analysis",
+      "routed_params": {"gp_name": "Spa"},
+      "expected_tools": ["resolve_session", "resolve_driver", "compare_strategy_scenarios", "verify_evidence"],
+      "min_evidence_fields": ["session_key", "driver_number", "strategy"]
+    },
+    {
+      "question": "What do the FIA regulations say about tyre usage rules?",
+      "expected_intent": "strategy_sources",
+      "routed_params": {"gp_name": null, "year": null},
+      "expected_tools": ["search_strategy_sources"],
+      "min_evidence_fields": ["sources"]
+    },
+    {
+      "question": "Quote the race director notes about safety car procedures at Monza.",
+      "expected_intent": "strategy_sources",
+      "routed_params": {"gp_name": "Monza"},
+      "expected_tools": ["search_strategy_sources"],
+      "min_evidence_fields": ["sources"]
+    },
+    {
+      "question": "What did the team radio transcript say about pitting at Spa?",
+      "expected_intent": "strategy_sources",
+      "routed_params": {"gp_name": "Spa"},
+      "expected_tools": ["search_strategy_sources"],
+      "min_evidence_fields": ["sources"]
+    }
+  ]
+}

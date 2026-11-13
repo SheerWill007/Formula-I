@@ -7,24 +7,18 @@ def test_list_drivers_returns_200(client, seed_session):
 
 
 def test_list_drivers_ordered_by_best_lap(client, seed_session):
-    data = client.get(
-        f"/api/v1/sessions/{seed_session}/drivers"
-    ).get_json()
+    data = client.get(f"/api/v1/sessions/{seed_session}/drivers").get_json()
     times = [d["best_lap_ms"] for d in data if d["best_lap_ms"]]
     assert times == sorted(times)
 
 
 def test_compare_requires_drivers_param(client, seed_session):
-    response = client.get(
-        f"/api/v1/sessions/{seed_session}/drivers/compare"
-    )
+    response = client.get(f"/api/v1/sessions/{seed_session}/drivers/compare")
     assert response.status_code == 400
 
 
 def test_compare_requires_at_least_two_drivers(client, seed_session):
-    response = client.get(
-        f"/api/v1/sessions/{seed_session}/drivers/compare?drivers=44"
-    )
+    response = client.get(f"/api/v1/sessions/{seed_session}/drivers/compare?drivers=44")
     assert response.status_code == 400
 
 

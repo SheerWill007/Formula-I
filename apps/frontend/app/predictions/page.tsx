@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Brain, CheckCircle2, ChevronDown, Cpu, Database, FlaskConical, GitBranch, Sigma, TrendingUp, AlertCircle, Trophy } from 'lucide-react'
+import Link from 'next/link'
+import { useAuth } from '@clerk/nextjs'
+import { CLERK_ENABLED } from '@/lib/clerk'
+import { Activity, BarChart3, Brain, CheckCircle2, ChevronDown, Cpu, Database, FlaskConical, GitBranch, Lock, Sigma, TrendingUp, AlertCircle, Trophy } from 'lucide-react'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1696178946280-776bfa09ba90?q=80&w=2232&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
@@ -360,7 +363,57 @@ function ValidationDeepDive({ data, isMobile }: { data: PredictionResponse; isMo
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+type TokenGetter = () => Promise<string | null>
+
+/** Predictions are members-only: Clerk sign-in gates the page and the API. */
 export default function PredictionsPage() {
+  if (!CLERK_ENABLED) return <PredictionsLocked mode="unconfigured" />
+  return <SignedInPredictions />
+}
+
+function SignedInPredictions() {
+  const { isLoaded, isSignedIn, getToken } = useAuth()
+  if (!isLoaded) {
+    return <div className="layout-wrapper"><p style={{ color: 'var(--text-3)', padding: '48px 0', textAlign: 'center' }}>Checking your session...</p></div>
+  }
+  if (!isSignedIn) return <PredictionsLocked mode="signed-out" />
+  return <PredictionsView getToken={getToken} />
+}
+
+function PredictionsLocked({ mode }: { mode: 'unconfigured' | 'signed-out' }) {
+  return (
+    <div className="layout-wrapper">
+      <div style={{
+        maxWidth: 560, margin: '48px auto', padding: '40px 32px', borderRadius: 28, textAlign: 'center',
+        background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)',
+      }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: 16, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
+          background: 'color-mix(in srgb, var(--red) 14%, transparent)', color: 'var(--red)',
+        }}>
+          <Lock size={22} strokeWidth={2.4} />
+        </div>
+        <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--red)' }}>Prediction Lab</p>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', margin: '8px 0 10px' }}>
+          Sign in to see race predictions
+        </h1>
+        <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text-3)' }}>
+          {mode === 'signed-out'
+            ? 'Podium probabilities and model analysis are available to signed-in members. It only takes a moment.'
+            : 'Member sign-in is not switched on for this deployment yet, so predictions are unavailable for now.'}
+        </p>
+        {mode === 'signed-out' && (
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
+            <Link href="/sign-in?redirect_url=/predictions" className="bx-btn-primary">Sign in</Link>
+            <Link href="/sign-up?redirect_url=/predictions" className="bx-btn-ghost">Create account</Link>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PredictionsView({ getToken }: { getToken: TokenGetter }) {
   const [sessions, setSessions] = useState<QualiSession[]>([])
   const [selectedKey, setSelectedKey] = useState<number | null>(null)
   const [data, setData] = useState<PredictionResponse | null>(null)
@@ -412,10 +465,18 @@ export default function PredictionsPage() {
     setData(null)
     setShowAllGrid(false)
     setExpanded(null)
-    fetch(`${BASE}/api/v1/sessions/${selectedKey}/predictions`)
-      .then(r => {
-        if (!r.ok) throw new Error(`API returned ${r.status}`)
-        return r.json()
+    getToken()
+      .then(token => fetch(`${BASE}/api/v1/sessions/${selectedKey}/predictions`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }))
+      .then(async r => {
+        const body = await r.json().catch(() => ({}))
+        if (r.status === 401) throw new Error('Your session expired. Sign in again to load predictions.')
+        if (r.status === 503 && body.error === 'model_unavailable') {
+          throw new Error('The prediction model is still being trained. Check back after the next data update.')
+        }
+        if (!r.ok) throw new Error(body.error || `API returned ${r.status}`)
+        return body
       })
       .then(d => {
         if (d.error) { setError(d.error); return }
@@ -425,9 +486,9 @@ export default function PredictionsPage() {
         }
         setData(sorted)
       })
-      .catch(() => setError('Failed to load predictions'))
+      .catch(e => setError(e instanceof Error ? e.message : 'Failed to load predictions'))
       .finally(() => setLoading(false))
-  }, [selectedKey])
+  }, [selectedKey, getToken])
 
   const selected = sessions.find(s => s.session_key === selectedKey)
   const maxPodium = data ? Math.max(...data.predictions.map(p => p.podium_probability)) : 1

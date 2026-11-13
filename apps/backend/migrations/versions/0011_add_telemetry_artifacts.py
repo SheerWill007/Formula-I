@@ -3,6 +3,7 @@
 Revision ID: 0011
 Revises: 0010
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -25,7 +26,12 @@ def upgrade() -> None:
         sa.Column("sample_count", sa.Integer(), nullable=False),
         sa.Column("size_bytes", sa.Integer(), nullable=False),
         sa.Column("checksum_sha256", sa.Text(), nullable=False),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            nullable=False,
+            server_default=sa.func.now(),
+        ),
         sa.ForeignKeyConstraint(["session_key"], ["sessions.session_key"]),
         sa.UniqueConstraint(
             "session_key",

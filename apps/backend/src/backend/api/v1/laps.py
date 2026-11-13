@@ -180,7 +180,9 @@ def driver_laps(session_key: int, driver_number: int):
 
     tb = dict(best) if best else None
     if tb and tb.get("best_s1") and tb.get("best_s2") and tb.get("best_s3"):
-        tb["theoretical_best_ms"] = float(tb["best_s1"]) + float(tb["best_s2"]) + float(tb["best_s3"])
+        tb["theoretical_best_ms"] = (
+            float(tb["best_s1"]) + float(tb["best_s2"]) + float(tb["best_s3"])
+        )
 
     return jsonify(
         {

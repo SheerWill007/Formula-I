@@ -3,6 +3,7 @@
 Revision ID: 0012
 Revises: 0011
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -24,8 +25,18 @@ def upgrade() -> None:
         sa.Column("driver_number", sa.Integer(), nullable=True),
         sa.Column("lap_number", sa.Integer(), nullable=True),
         sa.Column("payload", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            nullable=False,
+            server_default=sa.func.now(),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.TIMESTAMP(timezone=True),
+            nullable=False,
+            server_default=sa.func.now(),
+        ),
         sa.ForeignKeyConstraint(["session_key"], ["sessions.session_key"]),
         sa.UniqueConstraint(
             "session_key",
@@ -48,5 +59,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_index("idx_race_intelligence_events_driver", "race_intelligence_events")
-    op.drop_index("idx_race_intelligence_events_session_type", "race_intelligence_events")
+    op.drop_index(
+        "idx_race_intelligence_events_session_type", "race_intelligence_events"
+    )
     op.drop_table("race_intelligence_events")

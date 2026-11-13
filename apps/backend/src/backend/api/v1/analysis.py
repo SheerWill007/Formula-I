@@ -8,6 +8,7 @@ Race       → lap evolution, stint pace, position changes, sector stints
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
+from backend.config import settings
 from backend.extensions import engine
 
 analysis_bp = Blueprint("analysis", __name__)
@@ -1647,7 +1648,6 @@ def quali_segments(session_key: int):
     boundary detection only for older sessions that were ingested before
     quali_segment existed.
     """
-    import os
     import fastf1
     import pandas as pd
     from backend.api.v1.strategy import _resolve
@@ -1745,7 +1745,7 @@ def quali_segments(session_key: int):
     else:
         # ── 2. Fallback: derive segments from FastF1 cache for older data ────
         try:
-            cache_dir = os.environ.get("FASTF1_CACHE_DIR", "./fastf1_cache")
+            cache_dir = settings.fastf1_cache_dir
             fastf1.Cache.enable_cache(cache_dir)
 
             f1_session_name = (
@@ -2497,7 +2497,7 @@ def generate_insights(driver_keys: list, drivers: dict, matched_corners: list) -
     exit_delta = s0["avg_exit_speed_kmh"] - s1["avg_exit_speed_kmh"]
     if abs(exit_delta) > 2:
         faster_exit = abbr0 if exit_delta > 0 else abbr1
-       
+
         insights.append(
             {
                 "id": "exit_speed",
@@ -2683,6 +2683,7 @@ def generate_insights(driver_keys: list, drivers: dict, matched_corners: list) -
 
 # ── Qualifying: speed trap + lap progression analysis ─────────────────────────
 
+
 @analysis_bp.get("/sessions/<int:session_key>/analysis/quali-speed")
 def quali_speed(session_key: int):
     """
@@ -2703,8 +2704,9 @@ def quali_speed(session_key: int):
     This tells you a team's strategic philosophy for the circuit.
     """
     with engine.connect() as conn:
-
-        speed_rows = conn.execute(text("""
+        speed_rows = (
+            conn.execute(
+                text("""
             SELECT
                 l.driver_number,
                 d.abbreviation,
@@ -2731,14 +2733,21 @@ def quali_speed(session_key: int):
                     AND deleted = FALSE
               )
             ORDER BY l.lap_time_ms ASC
-        """), {"sk": session_key}).mappings().all()
+        """),
+                {"sk": session_key},
+            )
+            .mappings()
+            .all()
+        )
 
         # ── Lap progression ───────────────────────────────────────────────────
         # Every non-deleted lap per driver, in lap order.
         # Shows whether a driver improved, stayed flat, or got worse.
         # The shape of this curve tells you about car balance evolution
         # across the session (track evolution, tyre temperature management).
-        progression_rows = conn.execute(text("""
+        progression_rows = (
+            conn.execute(
+                text("""
             SELECT
                 l.driver_number,
                 d.abbreviation,
@@ -2759,7 +2768,12 @@ def quali_speed(session_key: int):
             WHERE l.session_key = :sk
               AND l.lap_time_ms  IS NOT NULL
             ORDER BY l.driver_number, l.lap_number ASC
-        """), {"sk": session_key}).mappings().all()
+        """),
+                {"sk": session_key},
+            )
+            .mappings()
+            .all()
+        )
 
     if not speed_rows:
         return jsonify({"speed_trap": [], "lap_progression": {}, "insights": []})
@@ -2774,15 +2788,22 @@ def quali_speed(session_key: int):
         speed_trap.append(d)
 
     # Find pole and compute gaps
-    pole_lap   = speed_trap[0]["lap_time_ms"] if speed_trap else None
+    pole_lap = speed_trap[0]["lap_time_ms"] if speed_trap else None
 
     for i, r in enumerate(speed_trap):
-        r["gap_to_pole_ms"] = None if i == 0 else (
-            round(r["lap_time_ms"] - pole_lap, 1) if r["lap_time_ms"] and pole_lap else None
+        r["gap_to_pole_ms"] = (
+            None
+            if i == 0
+            else (
+                round(r["lap_time_ms"] - pole_lap, 1)
+                if r["lap_time_ms"] and pole_lap
+                else None
+            )
         )
         r["speed_st_delta"] = (
-            round((r["speed_st"] or 0) - (speed_trap[i-1]["speed_st"] or 0), 1)
-            if i > 0 and r["speed_st"] else None
+            round((r["speed_st"] or 0) - (speed_trap[i - 1]["speed_st"] or 0), 1)
+            if i > 0 and r["speed_st"]
+            else None
         )
         # Downforce indicator: drivers with top speed > median are low-downforce
         r["speed_st_rank"] = i + 1
@@ -2790,25 +2811,27 @@ def quali_speed(session_key: int):
     # Process lap progression — group by driver
     lap_progression = {}
     for r in progression_rows:
-        dn  = str(r["driver_number"])
+        dn = str(r["driver_number"])
         if dn not in lap_progression:
             lap_progression[dn] = {
                 "driver_number": r["driver_number"],
-                "abbreviation":  r["abbreviation"],
-                "team_colour":   _resolve(r["team_colour"], r["team_name"]),
-                "team_name":     r["team_name"],
-                "laps": []
+                "abbreviation": r["abbreviation"],
+                "team_colour": _resolve(r["team_colour"], r["team_name"]),
+                "team_name": r["team_name"],
+                "laps": [],
             }
-        lap_progression[dn]["laps"].append({
-            "lap_number":   r["lap_number"],
-            "lap_time_ms":  r["lap_time_ms"],
-            "s1_ms":        r["s1_ms"],
-            "s2_ms":        r["s2_ms"],
-            "s3_ms":        r["s3_ms"],
-            "compound":     r["compound"],
-            "deleted":      r["deleted"],
-            "quali_segment": r["quali_segment"],
-        })
+        lap_progression[dn]["laps"].append(
+            {
+                "lap_number": r["lap_number"],
+                "lap_time_ms": r["lap_time_ms"],
+                "s1_ms": r["s1_ms"],
+                "s2_ms": r["s2_ms"],
+                "s3_ms": r["s3_ms"],
+                "compound": r["compound"],
+                "deleted": r["deleted"],
+                "quali_segment": r["quali_segment"],
+            }
+        )
 
     # ── Speed trap insights ───────────────────────────────────────────────────
     insights = []
@@ -2816,57 +2839,75 @@ def quali_speed(session_key: int):
     if len(speed_trap) >= 2:
         fastest_st = max(speed_trap, key=lambda r: r["speed_st"] or 0)
         slowest_st = min(speed_trap, key=lambda r: r["speed_st"] or 999)
-        st_spread  = (fastest_st["speed_st"] or 0) - (slowest_st["speed_st"] or 0)
+        st_spread = (fastest_st["speed_st"] or 0) - (slowest_st["speed_st"] or 0)
 
         # Speed trap spread insight
         # Wide spread = teams have very different downforce philosophies
         # Narrow spread = everyone converged on similar setup
         if st_spread > 15:
-            insights.append({
-                "tier":    "NOTABLE",
-                "title":   f"Wide speed trap spread — {st_spread:.0f} km/h between fastest and slowest",
-                "detail":  (f"{fastest_st['abbreviation']} runs the lowest drag "
-                            f"({fastest_st['speed_st']} km/h) while "
-                            f"{slowest_st['abbreviation']} runs highest downforce "
-                            f"({slowest_st['speed_st']} km/h). "
-                            f"A {st_spread:.0f} km/h gap signals different tyre management "
-                            f"or aerodynamic philosophies for this circuit."),
-            })
+            insights.append(
+                {
+                    "tier": "NOTABLE",
+                    "title": f"Wide speed trap spread — {st_spread:.0f} km/h between fastest and slowest",
+                    "detail": (
+                        f"{fastest_st['abbreviation']} runs the lowest drag "
+                        f"({fastest_st['speed_st']} km/h) while "
+                        f"{slowest_st['abbreviation']} runs highest downforce "
+                        f"({slowest_st['speed_st']} km/h). "
+                        f"A {st_spread:.0f} km/h gap signals different tyre management "
+                        f"or aerodynamic philosophies for this circuit."
+                    ),
+                }
+            )
 
         # Pole sitter speed comparison
         pole_driver = speed_trap[0]
-        pole_st     = pole_driver["speed_st"] or 0
-        pole_st_rank = sorted(speed_trap, key=lambda r: -(r["speed_st"] or 0)).index(pole_driver) + 1
+        pole_st = pole_driver["speed_st"] or 0
+        pole_st_rank = (
+            sorted(speed_trap, key=lambda r: -(r["speed_st"] or 0)).index(pole_driver)
+            + 1
+        )
 
         if pole_st_rank > 3:
-            insights.append({
-                "tier":    "CRITICAL",
-                "title":   f"{pole_driver['abbreviation']} on pole despite only P{pole_st_rank} top speed",
-                "detail":  (f"{pole_driver['abbreviation']} set pole with {pole_st} km/h top speed "
-                            f"(P{pole_st_rank} of the field). This indicates their lap time "
-                            f"advantage comes from mechanical grip and cornering rather than "
-                            f"straight-line speed — a high-downforce setup paying off."),
-            })
+            insights.append(
+                {
+                    "tier": "CRITICAL",
+                    "title": f"{pole_driver['abbreviation']} on pole despite only P{pole_st_rank} top speed",
+                    "detail": (
+                        f"{pole_driver['abbreviation']} set pole with {pole_st} km/h top speed "
+                        f"(P{pole_st_rank} of the field). This indicates their lap time "
+                        f"advantage comes from mechanical grip and cornering rather than "
+                        f"straight-line speed — a high-downforce setup paying off."
+                    ),
+                }
+            )
 
         # Fastest straight-line car
         if fastest_st["abbreviation"] != speed_trap[0]["abbreviation"]:
-            insights.append({
-                "tier":    "NOTABLE",
-                "title":   f"{fastest_st['abbreviation']} has the fastest car in a straight line",
-                "detail":  (f"{fastest_st['abbreviation']} recorded {fastest_st['speed_st']} km/h "
-                            f"at the speed trap — {st_spread:.0f} km/h faster than "
-                            f"{slowest_st['abbreviation']}. Low drag setup likely "
-                            f"trading cornering performance for straight-line speed."),
-            })
+            insights.append(
+                {
+                    "tier": "NOTABLE",
+                    "title": f"{fastest_st['abbreviation']} has the fastest car in a straight line",
+                    "detail": (
+                        f"{fastest_st['abbreviation']} recorded {fastest_st['speed_st']} km/h "
+                        f"at the speed trap — {st_spread:.0f} km/h faster than "
+                        f"{slowest_st['abbreviation']}. Low drag setup likely "
+                        f"trading cornering performance for straight-line speed."
+                    ),
+                }
+            )
 
-    return jsonify({
-        "speed_trap":      speed_trap,
-        "lap_progression": lap_progression,
-        "insights":        insights,
-    })
+    return jsonify(
+        {
+            "speed_trap": speed_trap,
+            "lap_progression": lap_progression,
+            "insights": insights,
+        }
+    )
 
 
 # ── Race intelligence: deterministic AI-ready evidence layer ────────────────
+
 
 def _linear_slope(points: list[tuple[float, float]]) -> float | None:
     """Return y-per-x slope for a small set of points, or None if unavailable."""
@@ -2888,6 +2929,7 @@ def _round_or_none(value, digits: int = 1):
     if value is None:
         return None
     return round(float(value), digits)
+
 
 def _avg(values: list[float]) -> float | None:
     clean = [float(v) for v in values if v is not None]
@@ -2915,6 +2957,7 @@ def _stint_phase(index: int, total: int) -> str:
     if pct < 0.67:
         return "middle"
     return "closing"
+
 
 @analysis_bp.get("/sessions/<int:session_key>/analysis/race-intelligence")
 def race_intelligence(session_key: int):
@@ -3068,22 +3111,27 @@ def race_intelligence(session_key: int):
         )
 
         track_rows = (
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 SELECT l.driver_number, d.abbreviation, d.team_name, d.team_colour, l.lap_number, l.lap_time_ms, l.position, l.compound,  COALESCE(l.stint, 1) AS stint, l.tyre_life_laps, l.pit_in_time_ms, l.pit_out_time_ms
                 FROM lap_times l 
                 JOIN drivers d ON d.session_key = l.session_key AND d.driver_number = l.driver_number
                 WHERE l.session_key = :sk
                 AND l.deleted = FALSE
-                ORDER BY l.driver_number, l.lap_number """), 
+                ORDER BY l.driver_number, l.lap_number """),
                 {"sk": session_key},
-            ).mappings().all()
+            )
+            .mappings()
+            .all()
         )
 
     driver_states = []
     for r in driver_rows:
         state = dict(r)
         compounds = state.pop("compounds", None)
-        state["team_colour"] = _resolve(state.get("team_colour"), state.get("team_name"))
+        state["team_colour"] = _resolve(
+            state.get("team_colour"), state.get("team_name")
+        )
         state["compounds"] = sorted(compounds.split(",")) if compounds else []
         state["avg_clean_ms"] = _round_or_none(state["avg_clean_ms"])
         state["best_lap_ms"] = _round_or_none(state["best_lap_ms"])
@@ -3145,14 +3193,20 @@ def race_intelligence(session_key: int):
 
     compound_pace = []
     for compound, times in compound_groups.items():
-        compound_pace.append({
-            "compound": compound,
-            "lap_count": len(times),
-            "avg_lap_ms": _round_or_none(_avg(times)),
-            "median_lap_ms": _round_or_none(_median(times)),
-            "best_lap_ms": _round_or_none(min(times)),
-        })
-    compound_pace.sort(key=lambda c: c["median_lap_ms"] if c["median_lap_ms"] is not None else 999999999)
+        compound_pace.append(
+            {
+                "compound": compound,
+                "lap_count": len(times),
+                "avg_lap_ms": _round_or_none(_avg(times)),
+                "median_lap_ms": _round_or_none(_median(times)),
+                "best_lap_ms": _round_or_none(min(times)),
+            }
+        )
+    compound_pace.sort(
+        key=lambda c: (
+            c["median_lap_ms"] if c["median_lap_ms"] is not None else 999999999
+        )
+    )
 
     stint_phase_summaries = []
     for stint in stint_groups.values():
@@ -3165,16 +3219,18 @@ def race_intelligence(session_key: int):
         for phase, times in phase_groups.items():
             if phase == "short":
                 continue
-            stint_phase_summaries.append({
-                "driver_number": stint["driver_number"],
-                "abbreviation": stint["abbreviation"],
-                "team_colour": stint["team_colour"],
-                "stint": stint["stint"],
-                "compound": stint["compound"],
-                "phase": phase,
-                "lap_count": len(times),
-                "avg_lap_ms": _round_or_none(_avg(times)),
-            })
+            stint_phase_summaries.append(
+                {
+                    "driver_number": stint["driver_number"],
+                    "abbreviation": stint["abbreviation"],
+                    "team_colour": stint["team_colour"],
+                    "stint": stint["stint"],
+                    "compound": stint["compound"],
+                    "phase": phase,
+                    "lap_count": len(times),
+                    "avg_lap_ms": _round_or_none(_avg(times)),
+                }
+            )
 
     cumulative_by_driver: dict[int, float] = {}
     lap_snapshots: dict[int, list[dict]] = {}
@@ -3182,40 +3238,50 @@ def race_intelligence(session_key: int):
     for r in sorted(track_rows, key=lambda x: (x["driver_number"], x["lap_number"])):
         dn = r["driver_number"]
         if r["lap_time_ms"] is not None:
-            cumulative_by_driver[dn] = cumulative_by_driver.get(dn, 0.0) + float(r["lap_time_ms"])
+            cumulative_by_driver[dn] = cumulative_by_driver.get(dn, 0.0) + float(
+                r["lap_time_ms"]
+            )
 
-        lap_snapshots.setdefault(r["lap_number"], []).append({
-            "driver_number": dn,
-            "abbreviation": r["abbreviation"],
-            "team_colour": _resolve(r["team_colour"], r["team_name"]),
-            "lap_number": r["lap_number"],
-            "position": r["position"],
-            "compound": r["compound"],
-            "stint": r["stint"],
-            "tyre_life_laps": r["tyre_life_laps"],
-            "cumulative_ms": cumulative_by_driver.get(dn),
-        })
+        lap_snapshots.setdefault(r["lap_number"], []).append(
+            {
+                "driver_number": dn,
+                "abbreviation": r["abbreviation"],
+                "team_colour": _resolve(r["team_colour"], r["team_name"]),
+                "lap_number": r["lap_number"],
+                "position": r["position"],
+                "compound": r["compound"],
+                "stint": r["stint"],
+                "tyre_life_laps": r["tyre_life_laps"],
+                "cumulative_ms": cumulative_by_driver.get(dn),
+            }
+        )
 
     battle_gaps = []
     for lap_number, cars in lap_snapshots.items():
-        ordered = [c for c in cars if c["position"] is not None and c["cumulative_ms"] is not None]
+        ordered = [
+            c
+            for c in cars
+            if c["position"] is not None and c["cumulative_ms"] is not None
+        ]
         ordered.sort(key=lambda c: c["position"])
 
         for ahead, behind in zip(ordered, ordered[1:]):
             gap_ms = behind["cumulative_ms"] - ahead["cumulative_ms"]
             if 0 < gap_ms <= 2000:
-                battle_gaps.append({
-                    "lap_number": lap_number,
-                    "ahead": ahead["abbreviation"],
-                    "behind": behind["abbreviation"],
-                    "ahead_driver_number": ahead["driver_number"],
-                    "behind_driver_number": behind["driver_number"],
-                    "position_ahead": ahead["position"],
-                    "gap_ms": round(gap_ms, 1),
-                    "gap_s": round(gap_ms / 1000.0, 3),
-                    "behind_compound": behind["compound"],
-                    "behind_tyre_life_laps": behind["tyre_life_laps"],
-                })
+                battle_gaps.append(
+                    {
+                        "lap_number": lap_number,
+                        "ahead": ahead["abbreviation"],
+                        "behind": behind["abbreviation"],
+                        "ahead_driver_number": ahead["driver_number"],
+                        "behind_driver_number": behind["driver_number"],
+                        "position_ahead": ahead["position"],
+                        "gap_ms": round(gap_ms, 1),
+                        "gap_s": round(gap_ms / 1000.0, 3),
+                        "behind_compound": behind["compound"],
+                        "behind_tyre_life_laps": behind["tyre_life_laps"],
+                    }
+                )
 
     battle_gaps.sort(key=lambda b: (b["lap_number"], b["position_ahead"]))
 
@@ -3238,14 +3304,16 @@ def race_intelligence(session_key: int):
 
         pace_advantage_ms = ahead_state["avg_clean_ms"] - behind_state["avg_clean_ms"]
         if pace_advantage_ms >= 250:
-            undercut_candidates.append({
-                "lap_number": battle["lap_number"],
-                "ahead": battle["ahead"],
-                "behind": battle["behind"],
-                "gap_s": battle["gap_s"],
-                "pace_advantage_ms": round(pace_advantage_ms, 1),
-                "signal": "behind_car_faster_in_close_air",
-            })
+            undercut_candidates.append(
+                {
+                    "lap_number": battle["lap_number"],
+                    "ahead": battle["ahead"],
+                    "behind": battle["behind"],
+                    "gap_s": battle["gap_s"],
+                    "pace_advantage_ms": round(pace_advantage_ms, 1),
+                    "signal": "behind_car_faster_in_close_air",
+                }
+            )
 
         if len(undercut_candidates) >= 5:
             break
@@ -3264,7 +3332,8 @@ def race_intelligence(session_key: int):
             score -= min(d["pace_stddev_ms"] / 250.0, 12.0)
 
         driver_stints = [
-            s for s in stint_summaries
+            s
+            for s in stint_summaries
             if s["driver_number"] == d["driver_number"]
             and s["degradation_ms_per_lap"] is not None
         ]
@@ -3277,18 +3346,20 @@ def race_intelligence(session_key: int):
             leader_ms = pace_rank[0]["avg_clean_ms"]
             score -= max((d["avg_clean_ms"] - leader_ms) / 250.0, 0)
 
-        driver_scores.append({
-            "driver_number": d["driver_number"],
-            "abbreviation": d["abbreviation"],
-            "team_colour": d["team_colour"],
-            "score": round(max(0.0, min(100.0, score)), 1),
-            "inputs": {
-                "avg_clean_ms": d["avg_clean_ms"],
-                "pace_stddev_ms": d["pace_stddev_ms"],
-                "positions_gained": d["positions_gained"],
-                "pit_stops": d["pit_stops"],
-            },
-        })
+        driver_scores.append(
+            {
+                "driver_number": d["driver_number"],
+                "abbreviation": d["abbreviation"],
+                "team_colour": d["team_colour"],
+                "score": round(max(0.0, min(100.0, score)), 1),
+                "inputs": {
+                    "avg_clean_ms": d["avg_clean_ms"],
+                    "pace_stddev_ms": d["pace_stddev_ms"],
+                    "positions_gained": d["positions_gained"],
+                    "pit_stops": d["pit_stops"],
+                },
+            }
+        )
 
     driver_scores.sort(key=lambda d: d["score"], reverse=True)
 
@@ -3317,13 +3388,17 @@ def race_intelligence(session_key: int):
             )
 
     deg_candidates = [
-        s for s in stint_summaries
+        s
+        for s in stint_summaries
         if s["degradation_ms_per_lap"] is not None and s["lap_count"] >= 5
     ]
     if deg_candidates:
         worst_deg = max(deg_candidates, key=lambda s: s["degradation_ms_per_lap"])
         best_deg = min(deg_candidates, key=lambda s: s["degradation_ms_per_lap"])
-        if worst_deg["degradation_ms_per_lap"] - best_deg["degradation_ms_per_lap"] >= 150:
+        if (
+            worst_deg["degradation_ms_per_lap"] - best_deg["degradation_ms_per_lap"]
+            >= 150
+        ):
             insights.append(
                 {
                     "id": "tyre_degradation_split",
@@ -3343,7 +3418,8 @@ def race_intelligence(session_key: int):
             )
 
     volatile = [
-        d for d in driver_states
+        d
+        for d in driver_states
         if d["pace_stddev_ms"] is not None and d["clean_laps"] >= 5
     ]
     if volatile:
@@ -3369,7 +3445,8 @@ def race_intelligence(session_key: int):
             )
 
     ordered_by_position = [
-        d for d in driver_states
+        d
+        for d in driver_states
         if d["final_position"] is not None and d["avg_clean_ms"] is not None
     ]
     ordered_by_position.sort(key=lambda d: d["final_position"])
@@ -3416,7 +3493,9 @@ def race_intelligence(session_key: int):
     )
 
 
-@analysis_bp.get("/sessions/<int:session_key>/analysis/race-intelligence/vector-index/rebuild")
+@analysis_bp.get(
+    "/sessions/<int:session_key>/analysis/race-intelligence/vector-index/rebuild"
+)
 def rebuild_race_vector_index(session_key: int):
     from backend.race_vector_index import rebuild_session_index
 
@@ -3428,26 +3507,33 @@ def rebuild_race_vector_index(session_key: int):
                     FROM race_intelligence_events
                     WHERE session_key = :sk
                     ORDER BY event_type, event_key"""),
-                    {"sk": session_key}
-            ).mappings().all()
+                {"sk": session_key},
+            )
+            .mappings()
+            .all()
         )
 
     if not rows:
-        return jsonify({
-            "error": "No race intelligence evnets found for this session",
-            "suggested_command": (
-                f"POST /api/v1/sessions/{session_key}/analysis/"
-                "race-intelligence/events/refresh"
-            )
-        }), 404
-    
+        return jsonify(
+            {
+                "error": "No race intelligence evnets found for this session",
+                "suggested_command": (
+                    f"POST /api/v1/sessions/{session_key}/analysis/"
+                    "race-intelligence/events/refresh"
+                ),
+            }
+        ), 404
+
     count = rebuild_session_index([dict(r) for r in rows], session_key)
 
-    return jsonify({
-        "session_key": session_key,
-        "indexed_events": count,
-        "index": "lancedb",
-    })
+    return jsonify(
+        {
+            "session_key": session_key,
+            "indexed_events": count,
+            "index": "lancedb",
+        }
+    )
+
 
 @analysis_bp.get("/analysis/race-intelligence/vector-search")
 def search_race_intelligence_vector_index():
@@ -3459,14 +3545,18 @@ def search_race_intelligence_vector_index():
         limit = int(request.args.get("limit", "8"))
     except ValueError:
         return jsonify({"error": "Invalid limit parameter"}), 400
-    
+
     if not query:
         return jsonify({"error": "Query parameter 'q' is required"}), 400
-    
-    results = search_similar(query=query, limit=max(1, min(limit, 25)), event_type=event_type)
-    return jsonify({
-        "query": query,
-        "event_type": event_type,
-        "count": len(results),
-        "results": results,
-    })
+
+    results = search_similar(
+        query=query, limit=max(1, min(limit, 25)), event_type=event_type
+    )
+    return jsonify(
+        {
+            "query": query,
+            "event_type": event_type,
+            "count": len(results),
+            "results": results,
+        }
+    )

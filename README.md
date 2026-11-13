@@ -1,198 +1,70 @@
-# Boxup: Formula 1 Data Analytics Platform
+# BoxUp: Formula 1 Data Analytics Platform
 
-A comprehensive Formula 1 telemetry and analytics platform that provides real-time race insights, performance analysis, and machine learning-powered predictions. Built with modern web technologies and a scalable microservices architecture.
+BoxUp is a Formula 1 analytics platform for exploring race sessions, qualifying
+telemetry, tyre strategy, driver profiles and race predictions, built on public
+motorsport data.
 
-## Overview
+## Features
 
-Boxup aggregates and visualizes Formula 1 telemetry data, driver performance metrics, and race analytics in real-time. The platform enables engineers, analysts, and enthusiasts to explore detailed telemetry traces, brake analysis, corner insights, and predictive models for championship standings and race outcomes.
+- **Sessions & telemetry**: lap times, sector analysis, speed traces, braking and corner insights
+- **Strategy**: stints, race order, race-intelligence insights
+- **Driver profiles**: career stats, season heatmap, driving-style radar, career trajectory
+- **Race predictions** (sign-in required): podium probabilities from a gradient-boosted model
+- **Calendar & standings**, plus a **blog** with model write-ups
+- **Pitwall AI agent / analyst** (backend only for now, needs an OpenRouter key)
 
-## Key Features
+## Architecture
 
-- **Real-Time Telemetry Visualization**: Interactive speed traces, brake analysis, and corner-by-corner performance metrics
-- **Race Analysis**: Comprehensive session data including qualifying segments, practice sessions, and race telemetry
-- **Driver Performance Analytics**: Comparative analysis between drivers with sector breakdowns and performance matrices
-- **Weather Integration**: Real-time weather conditions tracked throughout race sessions
-- **Championship Predictions**: Machine learning models for predicting championship outcomes and race results
-- **Responsive Dashboard**: Modern web interface with real-time updates and interactive visualizations
-- **Data Ingestion Pipeline**: Automated data collection and processing from official F1 sources
+| Part | Where | Notes |
+| --- | --- | --- |
+| Frontend (`apps/frontend`) | Vercel | Next.js 15, React 19. Clerk sign-in gates `/predictions` only. |
+| API (`apps/backend`) | Render (Docker) | Flask + SQLAlchemy. Runs `alembic upgrade head` on every start. |
+| Database | Neon Postgres | Sessions, laps, results, trained model files (`ml_model_files`). |
+| Ingestion (`packages/ingestion`) | GitHub Actions | FastF1, with an OpenF1 fallback now that F1's live-timing feed needs a login. |
+| Model training (`packages/ml`) | GitHub Actions | Publishes the model to Postgres; the API restores it on first prediction. |
 
-## Tech Stack
+### Workflows
 
-### Frontend
-- **Framework**: Next.js 16 (React 19)
-- **Styling**: Tailwind CSS, PostCSS
-- **Charts & Visualization**: Recharts, Plotly.js, react-d3-speedometer
-- **Real-Time Updates**: Socket.io Client
-- **Testing**: Vitest
-- **Linting**: ESLint
-- **Deployment**: Vercel
+- `.github/workflows/ingest.yml`: weekly (Monday 06:00 UTC) ingest of new sessions, then retrain.
+- `.github/workflows/backfill.yml`: one-off historical backfill by year (OpenF1 covers 2023+).
+- `.github/workflows/train.yml`: retrain on demand.
+- `.github/workflows/ci.yml`: backend tests, lint and frontend build on every push.
 
-### Backend
-- **Language**: Python 3
-- **Framework**: Flask
-- **Database**: PostgreSQL with TimescaleDB (time-series optimization)
-- **Migrations**: Alembic
-- **Message Queue**: Apache Kafka
-- **Caching**: Redis
-- **ML Tracking**: MLflow
+All three data workflows need the `DATABASE_URL` repository secret.
 
-### Infrastructure
-- **Containerization**: Docker & Docker Compose
-- **Orchestration**: Kafka for event streaming
-- **Database**: TimescaleDB for time-series telemetry data
-- **UI Tools**: Kafka UI for message queue monitoring
+## Run locally
 
-## Project Structure
+Requirements: Python 3.11+, [uv](https://docs.astral.sh/uv/), Node.js 22, pnpm 9 and Docker Compose.
 
-```
-.
-├── frontend/                 # Next.js web application
-│   ├── app/                 # Page routes and layouts
-│   ├── components/          # Reusable React components
-│   ├── lib/                 # Utilities and API clients
-│   └── types/               # TypeScript type definitions
-├── backend/                 # Python Flask API
-│   ├── src/backend/        # Core application logic
-│   │   ├── api/            # API endpoints
-│   │   ├── config.py       # Configuration management
-│   │   └── extensions.py   # Database and service extensions
-│   ├── migrations/         # Alembic database migrations
-│   └── tests/              # Test suite
-├── packages/
-│   ├── ingestion/          # F1 data ingestion pipeline
-│   ├── ml/                 # Machine learning models and training
-│   └── workers/            # Background job processors
-└── infra/                  # Infrastructure configuration
-    ├── docker-compose.yml  # Local development environment
-    └── postgres/           # Database initialization scripts
+```bash
+make install
+make up        # Postgres/TimescaleDB, Redis, Kafka via infra/docker-compose.yml
+make migrate
+make backend   # http://localhost:8000
+make frontend  # http://localhost:3000
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ (for frontend)
-- Python 3.9+ (for backend)
-- Docker & Docker Compose (for infrastructure)
-- PostgreSQL 15+ (or use Docker)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd "Formula 1"
-   ```
-
-2. **Start infrastructure services**
-   ```bash
-   cd infra
-   docker-compose up -d
-   ```
-   This starts PostgreSQL, TimescaleDB, Kafka, and Kafka UI.
-
-3. **Setup backend**
-   ```bash
-   cd backend
-   pip install -r ../requirements.txt
-   flask db upgrade  # Run migrations
-   python main.py
-   ```
-   The backend API will be available at `http://localhost:8000`
-
-4. **Setup frontend**
-   ```bash
-   cd frontend
-   pnpm install
-   pnpm dev
-   ```
-   The frontend will be available at `http://localhost:3000`
+Copy `.env.example` to `.env` and `apps/frontend/.env.example` to
+`apps/frontend/.env.local` to override defaults.
 
 ## Configuration
 
-Environment variables are managed through `.env` files. Key configurations:
+Backend (Render):
 
-- `DATABASE_URL`: PostgreSQL connection string
-- `REDIS_URL`: Redis connection URL
-- `KAFKA_BOOTSTRAP_SERVERS`: Kafka broker addresses
-- `MLFLOW_TRACKING_URI`: MLflow server URL
-- `AUTO_INGEST_ENABLED`: Enable automatic F1 data ingestion
+- `DATABASE_URL`: Neon connection string
+- `CORS_ORIGINS`: comma-separated frontend origins, e.g. `https://boxup-f1.vercel.app`
+- `CORS_ORIGIN_REGEX`: optional, allows Vercel preview URLs
+- `CLERK_ISSUER`: Clerk Frontend API URL, needed for predictions sign-in
+- `OPENROUTER_API_KEY`: optional, enables the AI agent
 
-## Development
+Frontend (Vercel):
 
-### Running Tests
+- `NEXT_PUBLIC_API_URL`: the Render API URL
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`: Clerk keys for predictions sign-in
 
-**Frontend:**
-```bash
-cd frontend
-pnpm test
-```
+## Credits and licence
 
-**Backend:**
-```bash
-cd backend
-pytest
-```
-
-### Code Quality
-
-**Frontend linting:**
-```bash
-cd frontend
-pnpm lint
-```
-
-**Database Migrations:**
-```bash
-cd backend
-alembic upgrade head
-```
-
-## API Documentation
-
-The backend provides REST API endpoints for:
-
-- `/api/sessions` - Race and practice session data
-- `/api/drivers` - Driver information and statistics
-- `/api/laps` - Lap telemetry and timing
-- `/api/analysis` - Performance analysis and comparisons
-- `/api/health` - Service health checks
-
-## Deployment
-
-The project is configured for deployment on:
-
-- **Frontend**: Vercel (optimized for Next.js)
-- **Backend**: Railway or similar container platforms
-- **Infrastructure**: Kubernetes-ready with Docker Compose for local development
-
-## Data Pipeline
-
-1. **Ingestion**: Automated service pulls official F1 data
-2. **Processing**: Data is validated, enriched, and stored in TimescaleDB
-3. **Streaming**: Events are published to Kafka topics for real-time consumers
-4. **Analysis**: ML models process telemetry for predictions
-5. **Visualization**: Frontend retrieves and visualizes data via REST API
-
-## Contributing
-
-1. Create a feature branch (`git checkout -b feature/amazing-feature`)
-2. Commit your changes (`git commit -m 'Add amazing feature'`)
-3. Push to the branch (`git push origin feature/amazing-feature`)
-4. Open a Pull Request
-
-## License
-
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See the LICENSE file for details.
-
-## Support
-
-For issues, questions, or suggestions, please open an issue on the repository.
-
-## Author
-
-**William Law II** — [willx.tech](https://willx.tech)
-
----
-
-**Last Updated**: June 2026
+BoxUp is licensed under the GNU AGPL v3 (see `LICENSE`). The backend, ingestion,
+ML packages, driver profiles and blog are adapted from the
+[Slipstream](https://github.com/abdullah-azeemi/Slipstream) project, used under the
+Apache License 2.0 (see `LICENSES/Slipstream-Apache-2.0.txt`).

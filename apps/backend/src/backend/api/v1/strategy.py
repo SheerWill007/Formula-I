@@ -1,6 +1,7 @@
 """
 Strategy API — tyre stints per driver for race sessions.
 """
+
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 from backend.extensions import engine
@@ -9,33 +10,48 @@ strategy_bp = Blueprint("strategy", __name__)
 
 # Fallback colours if team_colour is null in DB
 TEAM_COLOURS = {
-    'McLaren': 'FF8000', 'Ferrari': 'E8002D', 'Red Bull Racing': '3671C6',
-    'Mercedes': '27F4D2', 'Aston Martin': '229971', 'Alpine': 'FF87BC',
-    'Williams': '64C4FF', 'Haas F1 Team': 'B6BABD', 'Haas': 'B6BABD',
-    'Kick Sauber': '52E252', 'Sauber': '52E252', 'RB': '6692FF',
-    'Racing Bulls': '6692FF', 'Cadillac': 'C8A217', 'Audi': 'C8A217',
+    "McLaren": "FF8000",
+    "Ferrari": "E8002D",
+    "Red Bull Racing": "3671C6",
+    "Mercedes": "27F4D2",
+    "Aston Martin": "229971",
+    "Alpine": "FF87BC",
+    "Williams": "64C4FF",
+    "Haas F1 Team": "B6BABD",
+    "Haas": "B6BABD",
+    "Kick Sauber": "52E252",
+    "Sauber": "52E252",
+    "RB": "6692FF",
+    "Racing Bulls": "6692FF",
+    "Cadillac": "C8A217",
+    "Audi": "C8A217",
 }
 
 
 def _resolve(colour, team_name):
     if colour and colour.strip():
-        return colour.lstrip('#')
+        return colour.lstrip("#")
     for k, v in TEAM_COLOURS.items():
         if team_name and (k in team_name or team_name in k):
             return v
-    return '666666'
+    return "666666"
 
 
 @strategy_bp.get("/sessions/<int:session_key>/strategy")
 def race_strategy(session_key: int):
     with engine.connect() as conn:
-        has_stints = conn.execute(text("""
+        has_stints = conn.execute(
+            text("""
             SELECT COUNT(*) FROM lap_times
             WHERE session_key = :sk AND stint IS NOT NULL
-        """), {"sk": session_key}).scalar()
+        """),
+            {"sk": session_key},
+        ).scalar()
 
         if has_stints:
-            rows = conn.execute(text("""
+            rows = (
+                conn.execute(
+                    text("""
                 SELECT
                     l.driver_number,
                     d.abbreviation,
@@ -62,17 +78,33 @@ def race_strategy(session_key: int):
                     MIN(l.position) ASC NULLS LAST,
                     l.driver_number,
                     l.stint ASC NULLS LAST
-            """), {"sk": session_key}).mappings().all()
+            """),
+                    {"sk": session_key},
+                )
+                .mappings()
+                .all()
+            )
         else:
-            rows = conn.execute(text("""
-                WITH stint_calc AS (
+            rows = (
+                conn.execute(
+                    text("""
+                WITH changes AS (
+                    -- Postgres forbids nesting window functions, so flag
+                    -- compound changes first and running-sum them below.
                     SELECT driver_number, lap_number, compound, fresh_tyre,
-                        SUM(CASE WHEN compound != LAG(compound) OVER w
-                                    OR LAG(compound) OVER w IS NULL
-                             THEN 1 ELSE 0 END) OVER w AS stint
+                        CASE WHEN LAG(compound) OVER w IS NULL
+                                  OR compound != LAG(compound) OVER w
+                             THEN 1 ELSE 0 END AS is_new_stint
                     FROM lap_times
                     WHERE session_key = :sk AND compound IS NOT NULL AND deleted = FALSE
                     WINDOW w AS (PARTITION BY driver_number ORDER BY lap_number)
+                ),
+                stint_calc AS (
+                    SELECT driver_number, lap_number, compound, fresh_tyre,
+                        SUM(is_new_stint) OVER (
+                            PARTITION BY driver_number ORDER BY lap_number
+                        ) AS stint
+                    FROM changes
                 )
                 SELECT
                     sc.driver_number, d.abbreviation, d.team_name, d.team_colour,
@@ -85,14 +117,25 @@ def race_strategy(session_key: int):
                 GROUP BY sc.driver_number, d.abbreviation, d.team_name, d.team_colour,
                          sc.stint, sc.compound, sc.fresh_tyre
                 ORDER BY sc.driver_number, sc.stint
-            """), {"sk": session_key}).mappings().all()
+            """),
+                    {"sk": session_key},
+                )
+                .mappings()
+                .all()
+            )
 
         if not rows:
             return jsonify({"total_laps": 0, "stints": []})
 
-        total_laps = conn.execute(text("""
+        total_laps = (
+            conn.execute(
+                text("""
             SELECT MAX(lap_number) FROM lap_times WHERE session_key = :sk
-        """), {"sk": session_key}).scalar() or 0
+        """),
+                {"sk": session_key},
+            ).scalar()
+            or 0
+        )
 
     stints = []
     for r in rows:
@@ -101,3 +144,46 @@ def race_strategy(session_key: int):
         stints.append(d)
 
     return jsonify({"total_laps": total_laps, "stints": stints})
+
+
+@strategy_bp.get("/sessions/<int:session_key>/race-order")
+def race_order(session_key: int):
+    """Final race classification — last recorded position per driver."""
+    with engine.connect() as conn:
+        rows = (
+            conn.execute(
+                text("""
+            WITH final_pos AS (
+                SELECT DISTINCT ON (driver_number)
+                    driver_number, position
+                FROM lap_times
+                WHERE session_key = :sk
+                  AND position IS NOT NULL
+                  AND deleted    = FALSE
+                ORDER BY driver_number, lap_number DESC
+            )
+            SELECT
+                fp.driver_number,
+                d.abbreviation,
+                d.team_name,
+                d.team_colour,
+                fp.position
+            FROM final_pos fp
+            JOIN drivers d
+                ON d.driver_number = fp.driver_number
+                AND d.session_key  = :sk
+            ORDER BY fp.position ASC NULLS LAST
+        """),
+                {"sk": session_key},
+            )
+            .mappings()
+            .all()
+        )
+
+    order = []
+    for r in rows:
+        d = dict(r)
+        d["team_colour"] = _resolve(d.get("team_colour"), d.get("team_name"))
+        order.append(d)
+
+    return jsonify(order)

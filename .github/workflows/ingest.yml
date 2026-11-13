@@ -1,0 +1,73 @@
+name: Ingest & Train
+
+# Keeps the hosted database fresh without paying for an always-on worker.
+#  - Ingestion runs on the GitHub runner against Neon (FastF1, with an OpenF1
+#    fallback now that F1's live-timing feed needs a login).
+#  - Training also runs here; the model files are published to Postgres
+#    (table ml_model_files) and the Render API restores them on first use.
+#
+# Required repository secret:
+#   DATABASE_URL   Neon connection string (postgresql://...)
+# Optional secrets (raw telemetry traces in Cloudflare R2):
+#   TELEMETRY_ARTIFACT_BUCKET, R2_ENDPOINT_URL, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+
+on:
+  schedule:
+    # Every Monday 06:00 UTC, after a typical race weekend.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      force_train:
+        description: "Retrain the model even if no new sessions were ingested"
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: ingest-train
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      new_sessions: ${{ steps.auto-ingest.outputs.new_sessions }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TELEMETRY_STORAGE_MODE: files
+      TELEMETRY_ARTIFACT_BACKEND: ${{ secrets.R2_ENDPOINT_URL != '' && 'r2' || 'local' }}
+      TELEMETRY_ARTIFACT_BUCKET: ${{ secrets.TELEMETRY_ARTIFACT_BUCKET }}
+      R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      FASTF1_CACHE_DIR: /tmp/fastf1_cache
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Apply database migrations
+        run: uv run alembic -c apps/backend/alembic.ini upgrade head
+
+      - name: Ingest completed sessions
+        id: auto-ingest
+        run: uv run python -m ingestion.auto_ingest
+
+  train:
+    needs: ingest
+    if: ${{ always() && (needs.ingest.outputs.new_sessions == 'true' || inputs.force_train) }}
+    uses: ./.github/workflows/train.yml
+    secrets: inherit

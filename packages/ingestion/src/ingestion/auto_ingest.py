@@ -1,5 +1,5 @@
 """
-Auto-ingest new 2026 race weekend sessions.
+Auto-ingest completed race weekend sessions for the current season.
 
 Checks the FastF1 event schedule for the current season, finds sessions
 that have completed but aren't in our DB yet, and ingests them.
@@ -10,13 +10,12 @@ Run manually:
 Run on a schedule (cron example — every hour):
     0 * * * * cd /path/to/pitwall && uv run python -m ingestion.auto_ingest >> logs/auto_ingest.log 2>&1
 """
+
 from __future__ import annotations
 
 import os
-import subprocess
 from datetime import datetime, timezone
 
-import fastf1
 import structlog
 from sqlalchemy import create_engine, text
 from ingestion.config import settings
@@ -24,6 +23,38 @@ from ingestion.config import settings
 log = structlog.get_logger()
 
 AUTO_INGEST_LOCK_ID = 48219031
+
+# A session still "not ready" this many days after its event began is not
+# waiting for upstream any more: the data source is blocking us. Fail loudly.
+STUCK_AFTER_DAYS = 6
+
+
+class IngestStuckError(RuntimeError):
+    """Completed sessions could not be ingested for days (e.g. F1 livetiming and
+    OpenF1 both answer 401). ``new_sessions`` says whether anything else did land."""
+
+    def __init__(self, sessions: list[str], new_sessions: bool) -> None:
+        super().__init__(
+            f"{len(sessions)} completed session(s) could not be ingested for "
+            f"more than {STUCK_AFTER_DAYS} days: {', '.join(sessions)}. F1 "
+            "livetiming returns 401 without an F1TV login and OpenF1 refuses "
+            "unauthenticated access during live sessions; see "
+            "docs/repository.md for the options."
+        )
+        self.sessions = sessions
+        self.new_sessions = new_sessions
+
+
+def _event_is_stuck(event: dict, now: datetime) -> bool:
+    started = event.get("date_start")
+    if started is None:
+        return False
+    try:
+        if getattr(started, "tzinfo", None) is None:
+            started = started.replace(tzinfo=timezone.utc)
+        return (now - started).days > STUCK_AFTER_DAYS
+    except Exception:
+        return False
 
 CONVENTIONAL_SESSIONS = [
     ("FP1", False),
@@ -64,28 +95,25 @@ CLI_SESSION_MAP = {
 SPRINT_EVENT_FORMATS = {"sprint", "sprint_qualifying", "sprint_shootout"}
 
 
-def _database_url() -> str:
-    url = os.environ.get("DATABASE_URL", settings.database_url)
-    if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql+psycopg://", 1)
-    if url.startswith("postgresql://") and "+psycopg" not in url:
-        return url.replace("postgresql://", "postgresql+psycopg://", 1)
-    return url
-
-
 def get_ingested_sessions(engine) -> set[tuple[int, str, str]]:
     """Return set of (year, gp_name, session_type) already in DB."""
     from sqlalchemy.exc import ProgrammingError
+
     try:
         with engine.connect() as conn:
-            rows = conn.execute(text("""
+            rows = conn.execute(
+                text("""
                 SELECT year, gp_name, session_type FROM sessions
-            """)).fetchall()
+            """)
+            ).fetchall()
         return {(r[0], r[1], r[2]) for r in rows}
     except ProgrammingError as exc:
         # Check if it's an "UndefinedTable" error (table doesn't exist)
         if "undefined_table" in str(exc) or "does not exist" in str(exc):
-            log.warning("auto_ingest.migration_required", error="The 'sessions' table does not exist. Please run 'make migrate'.")
+            log.warning(
+                "auto_ingest.migration_required",
+                error="The 'sessions' table does not exist. Please run 'make migrate'.",
+            )
             return set()
         raise exc
 
@@ -93,7 +121,9 @@ def get_ingested_sessions(engine) -> set[tuple[int, str, str]]:
 def purge_practice_sessions(engine, current_year: int, current_gp: str) -> int:
     """Keep only practice sessions for the current GP and same GP from the previous year."""
     with engine.connect() as conn:
-        rows = conn.execute(text("""
+        rows = (
+            conn.execute(
+                text("""
             SELECT session_key
             FROM sessions
             WHERE session_type = ANY(:practice_types)
@@ -102,28 +132,52 @@ def purge_practice_sessions(engine, current_year: int, current_gp: str) -> int:
                 OR
                 (year = :previous_year AND gp_name = :current_gp)
               )
-        """), {
-            "practice_types": ['FP1', 'FP2', 'FP3'],
-            "current_year": current_year,
-            "previous_year": current_year - 1,
-            "current_gp": current_gp,
-        }).scalars().all()
+        """),
+                {
+                    "practice_types": ["FP1", "FP2", "FP3"],
+                    "current_year": current_year,
+                    "previous_year": current_year - 1,
+                    "current_gp": current_gp,
+                },
+            )
+            .scalars()
+            .all()
+        )
 
         session_keys = list(rows)
         if not session_keys:
             return 0
 
-        conn.execute(text("DELETE FROM telemetry WHERE session_key = ANY(:session_keys)"), {"session_keys": session_keys})
-        conn.execute(text("DELETE FROM lap_telemetry_stats WHERE session_key = ANY(:session_keys)"), {"session_keys": session_keys})
-        conn.execute(text("DELETE FROM lap_times WHERE session_key = ANY(:session_keys)"), {"session_keys": session_keys})
-        conn.execute(text("DELETE FROM drivers WHERE session_key = ANY(:session_keys)"), {"session_keys": session_keys})
-        conn.execute(text("DELETE FROM sessions WHERE session_key = ANY(:session_keys)"), {"session_keys": session_keys})
+        conn.execute(
+            text("DELETE FROM telemetry WHERE session_key = ANY(:session_keys)"),
+            {"session_keys": session_keys},
+        )
+        conn.execute(
+            text(
+                "DELETE FROM lap_telemetry_stats WHERE session_key = ANY(:session_keys)"
+            ),
+            {"session_keys": session_keys},
+        )
+        conn.execute(
+            text("DELETE FROM lap_times WHERE session_key = ANY(:session_keys)"),
+            {"session_keys": session_keys},
+        )
+        conn.execute(
+            text("DELETE FROM drivers WHERE session_key = ANY(:session_keys)"),
+            {"session_keys": session_keys},
+        )
+        conn.execute(
+            text("DELETE FROM sessions WHERE session_key = ANY(:session_keys)"),
+            {"session_keys": session_keys},
+        )
         conn.commit()
         return len(session_keys)
 
 
 def get_fastf1_schedule(year: int) -> list[dict]:
     """Fetch the F1 event schedule from FastF1."""
+    import fastf1  # heavy — lazy; this module is a long-lived process
+
     try:
         schedule = fastf1.get_event_schedule(year, include_testing=False)
         events = []
@@ -131,13 +185,15 @@ def get_fastf1_schedule(year: int) -> list[dict]:
             # Skip pre-season testing
             if event.get("EventFormat") == "testing":
                 continue
-            events.append({
-                "round":      int(event["RoundNumber"]),
-                "gp_name":    str(event["EventName"]),
-                "country":    str(event.get("Country", "")),
-                "date_start": event.get("EventDate"),
-                "event_format": str(event.get("EventFormat", "")).lower(),
-            })
+            events.append(
+                {
+                    "round": int(event["RoundNumber"]),
+                    "gp_name": str(event["EventName"]),
+                    "country": str(event.get("Country", "")),
+                    "date_start": event.get("EventDate"),
+                    "event_format": str(event.get("EventFormat", "")).lower(),
+                }
+            )
         return events
     except Exception as e:
         log.error("schedule.fetch_failed", error=str(e))
@@ -160,6 +216,7 @@ def session_has_completed(year: int, event: dict, session_type: str) -> bool:
 
     try:
         import fastf1
+
         event_obj = fastf1.get_event(year, event["round"])
 
         fastf1_session_name = FASTF1_SESSION_LOOKUP.get(session_type)
@@ -173,6 +230,7 @@ def session_has_completed(year: int, event: dict, session_type: str) -> bool:
         # Ensure timezone aware
         if session_date.tzinfo is None:
             from datetime import timezone as tz
+
             session_date = session_date.replace(tzinfo=tz.utc)
 
         # Session must have ended at least 6 hours ago
@@ -195,79 +253,88 @@ def session_has_completed(year: int, event: dict, session_type: str) -> bool:
             return False
 
 
-def ingest_session(year: int, gp_name: str, session_type: str) -> bool:
+def ingest_session(year: int, gp_name: str, session_type: str) -> bool | None:
     """
-    Run the ingest_session script for a single session.
-    Returns True if successful.
+    Ingest a single session in-process.
+    Returns:
+        True: Ingested successfully.
+        None: Session data is not ready/published yet upstream in FastF1.
+        False: Ingestion failed due to an error.
     """
     session_name = CLI_SESSION_MAP.get(session_type, session_type)
 
-    # Strip " Grand Prix" suffix for the CLI argument
+    # Strip " Grand Prix" suffix for the FastF1 lookup
     gp_short = gp_name.replace(" Grand Prix", "").replace(" ePrix", "")
 
-    log.info("ingest.starting",
-             year=year, gp=gp_short, session=session_name)
+    log.info("ingest.start", year=year, gp=gp_short, session=session_name)
 
     try:
-        result = subprocess.run(
-            [
-                "uv", "run", "python", "-m", "ingestion.ingest_session",
-                "--year",    str(year),
-                "--gp",      gp_short,
-                "--session", session_name,
-            ],
-            capture_output=True,
-            text=True,
-            timeout=600,   # 10 min max per session
-        )
+        from ingestion.ingest_session import ingest_session as run_ingest
 
-        if result.returncode == 0:
-            log.info("ingest.success", year=year, gp=gp_short, session=session_name)
+        session_key = run_ingest(year, gp_short, session_name)
+
+        if session_key is not None:
+            log.info(
+                "ingest.success",
+                year=year,
+                gp=gp_short,
+                session=session_name,
+                session_key=session_key,
+            )
             return True
-        else:
-            log.error("ingest.failed",
-                      year=year, gp=gp_short, session=session_name,
-                      stderr=result.stderr[-500:] if result.stderr else "")
-            return False
-
-    except subprocess.TimeoutExpired:
-        log.error("ingest.timeout", year=year, gp=gp_short, session=session_name)
+        log.error("ingest.failed", year=year, gp=gp_short, session=session_name)
         return False
     except Exception as e:
-        log.error("ingest.error", year=year, gp=gp_short, session=session_name, error=str(e))
+        is_not_loaded = (
+            type(e).__name__ == "DataNotLoadedError"
+            or "DataNotLoadedError" in str(type(e))
+            or "not been loaded yet" in str(e).lower()
+        )
+        if is_not_loaded:
+            log.warning(
+                "auto_ingest.not_ready",
+                gp=gp_name,
+                session=session_name,
+                reason="FastF1 data not available yet upstream",
+            )
+            return None
+
+        log.error(
+            "ingest.error", year=year, gp=gp_short, session=session_name, error=str(e)
+        )
         return False
 
 
 def run_once() -> bool:
     current_year = datetime.now(timezone.utc).year
-    engine = create_engine(_database_url())
+    engine = create_engine(settings.db_url)
+    lock_conn = engine.connect()
     lock_acquired = False
 
-    with engine.connect() as conn:
+    try:
         lock_acquired = bool(
-            conn.execute(
+            lock_conn.execute(
                 text("SELECT pg_try_advisory_lock(:lock_id)"),
                 {"lock_id": AUTO_INGEST_LOCK_ID},
             ).scalar()
         )
 
-    if not lock_acquired:
-        log.info("auto_ingest.skip_locked")
-        return False
+        if not lock_acquired:
+            log.info("auto_ingest.skip_locked")
+            return False
 
-    ingested = get_ingested_sessions(engine)
-    try:
-        log.info("auto_ingest.start",
-                 year=current_year,
-                 already_ingested=len(ingested))
+        ingested = get_ingested_sessions(engine)
+        log.info("auto_ingest.start", year=current_year, already_ingested=len(ingested))
 
         schedule = get_fastf1_schedule(current_year)
         if not schedule:
-            log.warning("auto_ingest.no_schedule")
-            return False
+            raise RuntimeError(f"No FastF1 event schedule available for {current_year}")
 
         new_sessions = 0
-        failed       = 0
+        not_ready = 0
+        failed = 0
+        stuck: list[str] = []
+        now = datetime.now(timezone.utc)
         latest_gp_ingested: str | None = None
 
         for event in schedule:
@@ -282,50 +349,82 @@ def run_once() -> bool:
 
                 # Skip if session hasn't completed yet
                 if not session_has_completed(current_year, event, session_type):
-                    log.info("auto_ingest.not_ready",
-                             gp=gp_name, session=session_type)
+                    log.info("auto_ingest.not_ready", gp=gp_name, session=session_type)
                     continue
 
                 # Ingest it
-                success = ingest_session(current_year, gp_name, session_type)
-                if success:
+                result = ingest_session(current_year, gp_name, session_type)
+                if result is True:
                     new_sessions += 1
-                    ingested.add(key)   # prevent re-attempting in same run
+                    ingested.add(key)  # prevent re-attempting in same run
                     latest_gp_ingested = gp_name
+                elif result is None:
+                    not_ready += 1
+                    if _event_is_stuck(event, now):
+                        stuck.append(f"{current_year} {gp_name} {session_type}")
                 else:
                     failed += 1
 
-        log.info("auto_ingest.done",
-                 new_sessions=new_sessions,
-                 failed=failed,
-                 total_in_db=len(ingested))
+        log.info(
+            "auto_ingest.done",
+            new_sessions=new_sessions,
+            not_ready=not_ready,
+            failed=failed,
+            total_in_db=len(ingested),
+        )
+
+        if failed:
+            raise RuntimeError(f"Failed to ingest {failed} completed session(s)")
 
         if new_sessions > 0:
             if latest_gp_ingested:
-                deleted = purge_practice_sessions(engine, current_year, latest_gp_ingested)
-                log.info("auto_ingest.practice_purged", gp=latest_gp_ingested, deleted=deleted)
-            # Retrain ML model if new race weekends were added
-            log.info("auto_ingest.retraining_model")
-            try:
-                subprocess.run(
-                    ["uv", "run", "python", "-m", "ml.train"],
-                    capture_output=True, text=True, timeout=300,
+                deleted = purge_practice_sessions(
+                    engine, current_year, latest_gp_ingested
                 )
-                log.info("auto_ingest.model_retrained")
-            except Exception as e:
-                log.warning("auto_ingest.retrain_failed", error=str(e))
+                log.info(
+                    "auto_ingest.practice_purged",
+                    gp=latest_gp_ingested,
+                    deleted=deleted,
+                )
+
+        if stuck:
+            log.error("auto_ingest.stuck", sessions=stuck)
+            raise IngestStuckError(stuck, new_sessions > 0)
 
         return new_sessions > 0
     finally:
-        with engine.connect() as conn:
-            conn.execute(
-                text("SELECT pg_advisory_unlock(:lock_id)"),
-                {"lock_id": AUTO_INGEST_LOCK_ID},
-            )
+        try:
+            if lock_acquired:
+                try:
+                    lock_conn.execute(
+                        text("SELECT pg_advisory_unlock(:lock_id)"),
+                        {"lock_id": AUTO_INGEST_LOCK_ID},
+                    )
+                except Exception as e:
+                    log.warning("auto_ingest.unlock_failed", error=str(e))
+        finally:
+            try:
+                lock_conn.close()
+            except Exception:
+                pass
+            engine.dispose()
+
+
+def _write_output(new_sessions: bool) -> None:
+    output_file = os.environ.get("GITHUB_OUTPUT")
+    if output_file:
+        with open(output_file, "a", encoding="utf-8") as output:
+            output.write(f"new_sessions={'true' if new_sessions else 'false'}\n")
 
 
 def main():
-    run_once()
+    try:
+        new_sessions = run_once()
+    except IngestStuckError as exc:
+        # Record what did land (so training still runs), then fail the job.
+        _write_output(exc.new_sessions)
+        raise
+    _write_output(new_sessions)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,9 @@
 [project]
-name = "boxup-ingestion"
+name = "slipstream-ingestion"
 version = "0.1.0"
 requires-python = ">=3.11"
-authors = [
-    { name = "William Law II", email = "williambenjaminlaw007@gmail.com" },
-]
 dependencies = [
+    "slipstream-config",
     "fastf1>=3.3",
     "httpx>=0.27",
     "pydantic>=2.7",
@@ -20,6 +18,9 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+slipstream-config = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ingestion"]

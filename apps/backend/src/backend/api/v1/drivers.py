@@ -4,6 +4,7 @@ Drivers API endpoints.
 GET /api/v1/sessions/<key>/drivers                → all drivers
 GET /api/v1/sessions/<key>/drivers/<num>/compare  → head-to-head stats
 """
+
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 
@@ -16,7 +17,9 @@ drivers_bp = Blueprint("drivers", __name__)
 def list_drivers(session_key: int):
     """All drivers in a session with their best lap time."""
     with engine.connect() as conn:
-        rows = conn.execute(text("""
+        rows = (
+            conn.execute(
+                text("""
             SELECT
                 d.driver_number,
                 d.full_name,
@@ -35,7 +38,12 @@ def list_drivers(session_key: int):
                 d.driver_number, d.full_name, d.abbreviation,
                 d.team_name, d.team_colour
             ORDER BY best_lap_ms ASC NULLS LAST
-        """), {"key": session_key}).mappings().all()
+        """),
+                {"key": session_key},
+            )
+            .mappings()
+            .all()
+        )
 
     return jsonify([dict(r) for r in rows])
 
@@ -50,6 +58,7 @@ def compare_drivers(session_key: int):
     sector-by-sector delta vs the fastest driver.
     """
     from flask import request
+
     drivers_param = request.args.get("drivers", "")
 
     if not drivers_param:
@@ -67,7 +76,9 @@ def compare_drivers(session_key: int):
 
     with engine.connect() as conn:
         for num in driver_nums:
-            stats = conn.execute(text("""
+            stats = (
+                conn.execute(
+                    text("""
                 SELECT
                     d.driver_number,
                     d.abbreviation,
@@ -89,8 +100,12 @@ def compare_drivers(session_key: int):
                   AND l.lap_time_ms   IS NOT NULL
                   AND l.deleted       = FALSE
                 GROUP BY d.driver_number, d.abbreviation, d.team_name, d.team_colour
-            """), {"session_key": session_key, "driver_number": num}
-            ).mappings().first()
+            """),
+                    {"session_key": session_key, "driver_number": num},
+                )
+                .mappings()
+                .first()
+            )
 
             if stats:
                 results.append(dict(stats))
@@ -102,9 +117,12 @@ def compare_drivers(session_key: int):
     for r in results:
         if r["best_lap_ms"]:
             r["gap_to_fastest_ms"] = round(float(r["best_lap_ms"]) - best_lap, 3)
-            r["theoretical_best_ms"] = float(r["theoretical_best_ms"]) if r.get("theoretical_best_ms") else None
+            r["theoretical_best_ms"] = (
+                float(r["theoretical_best_ms"])
+                if r.get("theoretical_best_ms")
+                else None
+            )
         else:
             r["gap_to_fastest_ms"] = None
-
 
     return jsonify(results)

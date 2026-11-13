@@ -1,0 +1,47 @@
+name: Train Model
+
+# Trains the race-prediction model on the GitHub runner and publishes the
+# model files to Postgres (ml_model_files). The Render API downloads them the
+# next time a prediction is requested, so no persistent disk is needed.
+#
+# Required repository secret: DATABASE_URL
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+concurrency:
+  group: train-model
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ML_MODELS_DIR: /tmp/ml_models
+      ML_PUBLISH_TO_DB: "true"
+      FASTF1_CACHE_DIR: /tmp/fastf1_cache
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Apply database migrations
+        run: uv run alembic -c apps/backend/alembic.ini upgrade head
+
+      - name: Train and publish model
+        run: uv run python -m ml.train

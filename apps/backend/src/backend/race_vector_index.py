@@ -1,12 +1,12 @@
 """
-    LanceDB index for deterministic race-intelligence events.
+LanceDB index for deterministic race-intelligence events.
 
-    Postgres remains as the source of truth. Whereas, LanceDB is a rebuildable index for fast vector search of similarity index over the rows from race_intelligence_events.
+Postgres remains as the source of truth. Whereas, LanceDB is a rebuildable index for fast vector search of similarity index over the rows from race_intelligence_events.
 """
 
 from __future__ import annotations
 import hashlib
-import json 
+import json
 import math
 import re
 from typing import Any
@@ -14,20 +14,24 @@ from backend.config import settings
 
 VECTOR_DIM = 384
 
+
 def _connect():
     import lancedb
+
     return lancedb.connect(settings.race_vector_index_dir)
+
 
 def _tokenize(text: str) -> list[str]:
     return re.findall(r"[a-z0-9_]+", text.lower())
 
-def embed_text(text: str) -> list[float]:
-    """ 
-        Deterministic local embedding
 
-        This is intentionally simple and dependency-light for the first LanceDB step.
-        Later we can replace this with OpenAI embeddings or a local model while keeping
-        the same LanceDB table shape.
+def embed_text(text: str) -> list[float]:
+    """
+    Deterministic local embedding
+
+    This is intentionally simple and dependency-light for the first LanceDB step.
+    Later we can replace this with OpenAI embeddings or a local model while keeping
+    the same LanceDB table shape.
     """
     vector = [0.0] * VECTOR_DIM
     for token in _tokenize(text):
@@ -39,8 +43,9 @@ def embed_text(text: str) -> list[float]:
     norm = math.sqrt(sum(x * x for x in vector))
     if norm == 0:
         return vector
-    
+
     return [v / norm for v in vector]
+
 
 def event_to_text(event: dict[str, Any]) -> str:
     payload = event.get("payload") or {}
@@ -60,6 +65,7 @@ def event_to_text(event: dict[str, Any]) -> str:
     ]
     return "\n".join(parts)
 
+
 def event_to_record(event: dict[str, Any]) -> dict[str, Any]:
     text = event_to_text(event)
 
@@ -75,6 +81,7 @@ def event_to_record(event: dict[str, Any]) -> dict[str, Any]:
         "payload_json": json.dumps(event.get("payload") or {}, sort_keys=True),
     }
 
+
 def _table(records: list[dict[str, Any]] | None = None):
     db = _connect()
     table_name = settings.race_vector_table
@@ -84,18 +91,21 @@ def _table(records: list[dict[str, Any]] | None = None):
     if table_name in existing:
         return db.open_table(table_name)
 
-    seed_records = records or [{
-        "id": -1,
-        "session_key": -1,
-        "event_type": "seed",
-        "event_key": "seed",
-        "driver_number": None,
-        "lap_number": None,
-        "text": "seed",
-        "vector": embed_text("seed"),
-        "payload_json": "{}",
-    }]
+    seed_records = records or [
+        {
+            "id": -1,
+            "session_key": -1,
+            "event_type": "seed",
+            "event_key": "seed",
+            "driver_number": None,
+            "lap_number": None,
+            "text": "seed",
+            "vector": embed_text("seed"),
+            "payload_json": "{}",
+        }
+    ]
     return db.create_table(table_name, data=seed_records)
+
 
 def rebuild_session_index(events: list[dict[str, Any]], session_key: int) -> int:
     records = [event_to_record(event) for event in events]
@@ -107,7 +117,10 @@ def rebuild_session_index(events: list[dict[str, Any]], session_key: int) -> int
 
     return len(records)
 
-def search_similar(query: str, limit: int = 8, event_type: str | None = None) -> list[dict[str, Any]]:
+
+def search_similar(
+    query: str, limit: int = 8, event_type: str | None = None
+) -> list[dict[str, Any]]:
     table = _table()
     results = table.search(embed_text(query)).limit(limit).to_list()
 
@@ -122,16 +135,18 @@ def search_similar(query: str, limit: int = 8, event_type: str | None = None) ->
         except json.JSONDecodeError:
             payload = {}
 
-        cleaned.append({
-            "id": row.get("id"),
-            "session_key": row.get("session_key"),
-            "event_type": row.get("event_type"),
-            "event_key": row.get("event_key"),
-            "driver_number": row.get("driver_number"),
-            "lap_number": row.get("lap_number"),
-            "score": row.get("_distance"),
-            "text": row.get("text"),
-            "payload": payload,
-        })
+        cleaned.append(
+            {
+                "id": row.get("id"),
+                "session_key": row.get("session_key"),
+                "event_type": row.get("event_type"),
+                "event_key": row.get("event_key"),
+                "driver_number": row.get("driver_number"),
+                "lap_number": row.get("lap_number"),
+                "score": row.get("_distance"),
+                "text": row.get("text"),
+                "payload": payload,
+            }
+        )
 
     return cleaned

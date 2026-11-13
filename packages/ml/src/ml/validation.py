@@ -57,7 +57,9 @@ def compute_stream_attribution(feature_values: dict[str, float]) -> list[dict]:
             "share": round(value / total, 3),
             "score": round(value, 3),
         }
-        for stream, value in sorted(totals.items(), key=lambda item: item[1], reverse=True)
+        for stream, value in sorted(
+            totals.items(), key=lambda item: item[1], reverse=True
+        )
     ]
 
 
@@ -85,19 +87,29 @@ def compute_validation_report(df: pd.DataFrame, model=None) -> dict:
     return report
 
 
-def compute_podium_metrics(y_true, predicted_positions, podium_probabilities, grid_positions=None) -> dict:
+def compute_podium_metrics(
+    y_true, predicted_positions, podium_probabilities, grid_positions=None
+) -> dict:
     y_true = np.asarray(y_true)
     predicted_positions = np.asarray(predicted_positions)
     podium_probabilities = np.asarray(podium_probabilities)
     actual = y_true <= 3
     predicted = predicted_positions <= 3
-    grid_positions = np.asarray(grid_positions) if grid_positions is not None else np.arange(1, len(y_true) + 1)
+    grid_positions = (
+        np.asarray(grid_positions)
+        if grid_positions is not None
+        else np.arange(1, len(y_true) + 1)
+    )
     baseline = grid_positions <= 3
     brier = np.mean((podium_probabilities - actual.astype(float)) ** 2)
 
     return {
-        "top3_hit_rate": _safe_float(len(set(np.where(actual)[0]) & set(np.where(predicted)[0])) / 3.0),
-        "podium_precision": _safe_float(precision_score(actual, predicted, zero_division=0)),
+        "top3_hit_rate": _safe_float(
+            len(set(np.where(actual)[0]) & set(np.where(predicted)[0])) / 3.0
+        ),
+        "podium_precision": _safe_float(
+            precision_score(actual, predicted, zero_division=0)
+        ),
         "podium_recall": _safe_float(recall_score(actual, predicted, zero_division=0)),
         "brier_score": _safe_float(brier),
         "grid_baseline_top3_hit_rate": _safe_float(
@@ -122,31 +134,44 @@ def _feature_tests(df: pd.DataFrame, podium: pd.Series) -> list[dict]:
             continue
 
         pooled = math.sqrt(
-            ((len(podium_vals) - 1) * podium_vals.var(ddof=1) + (len(field_vals) - 1) * field_vals.var(ddof=1))
+            (
+                (len(podium_vals) - 1) * podium_vals.var(ddof=1)
+                + (len(field_vals) - 1) * field_vals.var(ddof=1)
+            )
             / max(len(podium_vals) + len(field_vals) - 2, 1)
         )
-        cohen_d = 0.0 if pooled == 0 else (podium_vals.mean() - field_vals.mean()) / pooled
+        cohen_d = (
+            0.0 if pooled == 0 else (podium_vals.mean() - field_vals.mean()) / pooled
+        )
         p_value = None
         spearman = None
         if stats is not None:
             try:
-                p_value = stats.ttest_ind(podium_vals, field_vals, equal_var=False, nan_policy="omit").pvalue
+                p_value = stats.ttest_ind(
+                    podium_vals, field_vals, equal_var=False, nan_policy="omit"
+                ).pvalue
             except Exception:
                 p_value = None
             try:
-                corr = stats.spearmanr(pd.to_numeric(df[feature], errors="coerce"), df[TARGET_COL], nan_policy="omit")
+                corr = stats.spearmanr(
+                    pd.to_numeric(df[feature], errors="coerce"),
+                    df[TARGET_COL],
+                    nan_policy="omit",
+                )
                 spearman = corr.correlation
             except Exception:
                 spearman = None
 
-        rows.append({
-            "feature": feature,
-            "stream": feature_stream_for(feature),
-            "stream_label": stream_label(feature_stream_for(feature)),
-            "cohens_d": _safe_float(cohen_d),
-            "p_value": _safe_float(p_value, 5),
-            "spearman_r": _safe_float(spearman),
-        })
+        rows.append(
+            {
+                "feature": feature,
+                "stream": feature_stream_for(feature),
+                "stream_label": stream_label(feature_stream_for(feature)),
+                "cohens_d": _safe_float(cohen_d),
+                "p_value": _safe_float(p_value, 5),
+                "spearman_r": _safe_float(spearman),
+            }
+        )
 
     rows.sort(key=lambda row: abs(row["cohens_d"] or 0), reverse=True)
     return rows[:12]
@@ -160,11 +185,15 @@ def _vif_report(df: pd.DataFrame) -> list[dict]:
     rows = []
     for feature in FEATURE_COLS:
         y = numeric[feature].to_numpy(dtype=float)
-        x = numeric[[col for col in FEATURE_COLS if col != feature]].to_numpy(dtype=float)
+        x = numeric[[col for col in FEATURE_COLS if col != feature]].to_numpy(
+            dtype=float
+        )
         if np.std(y) == 0 or x.shape[1] == 0:
             continue
         try:
-            coef, *_ = np.linalg.lstsq(np.column_stack([np.ones(len(x)), x]), y, rcond=None)
+            coef, *_ = np.linalg.lstsq(
+                np.column_stack([np.ones(len(x)), x]), y, rcond=None
+            )
             pred = np.column_stack([np.ones(len(x)), x]) @ coef
             ss_res = float(np.sum((y - pred) ** 2))
             ss_tot = float(np.sum((y - y.mean()) ** 2))

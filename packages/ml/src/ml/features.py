@@ -91,7 +91,7 @@ NEW_FEATURES = [
     "fp1_long_run_pace_ms",  # FP1 long-run average pace
     "sprint_finish_position",  # sprint result where available, neutral otherwise
     "sprint_position_delta",  # sprint gain/loss vs start proxy
-    "sc_probability",  # circuit safety-car prior
+    "sc_probability",  # circuit safety-car / VSC prior (rate of races with a neutralisation)
     "overtake_difficulty",  # 0-1 circuit passing difficulty prior
     "dnf_rate_circuit",  # circuit reliability/DNF prior
     # Derived qualifying quality signals
@@ -578,8 +578,9 @@ def compute_fp1_long_run_signal(
     values if the session has no credible long-run work.
     """
     with engine.connect() as conn:
-        rows = conn.execute(
-            text("""
+        rows = (
+            conn.execute(
+                text("""
             WITH fp1 AS (
                 SELECT session_key
                 FROM sessions
@@ -623,8 +624,11 @@ def compute_fp1_long_run_signal(
                 AVG(deg_ms_lap) AS deg_rate_ms_lap
             FROM stints
         """),
-            {"team_name": team_name, "gp_name": gp_name, "year": year},
-        ).mappings().first()
+                {"team_name": team_name, "gp_name": gp_name, "year": year},
+            )
+            .mappings()
+            .first()
+        )
 
     if not rows or rows["long_run_pace_ms"] is None:
         return {"fp1_deg_rate_ms_lap": 0.0, "fp1_long_run_pace_ms": 0.0}
@@ -643,8 +647,9 @@ def compute_sprint_signal(
 ) -> dict:
     """Sprint result signal where available; neutral when the weekend has no sprint."""
     with engine.connect() as conn:
-        row = conn.execute(
-            text("""
+        row = (
+            conn.execute(
+                text("""
             WITH sprint_session AS (
                 SELECT session_key
                 FROM sessions
@@ -684,8 +689,11 @@ def compute_sprint_signal(
             FROM classified
             WHERE driver_number = :driver_number
         """),
-            {"driver_number": driver_number, "gp_name": gp_name, "year": year},
-        ).mappings().first()
+                {"driver_number": driver_number, "gp_name": gp_name, "year": year},
+            )
+            .mappings()
+            .first()
+        )
 
     if not row or row["sprint_finish_position"] is None:
         return {"sprint_finish_position": 10.0, "sprint_position_delta": 0.0}
@@ -697,9 +705,106 @@ def compute_sprint_signal(
     }
 
 
-def compute_circuit_priors(gp_name: str) -> dict:
+# How many "virtual" prior races the hand-set prior is worth. With m=3, a
+# circuit seen once barely moves off its prior; one seen 12 times is mostly data.
+PRIOR_STRENGTH_RACES = 3
+
+
+def _shrink(successes: int, n: int, prior: float, m: int = PRIOR_STRENGTH_RACES) -> float:
+    """Beta-style shrinkage of an observed rate toward ``prior``."""
+    return (successes + m * prior) / (n + m)
+
+
+def compute_empirical_circuit_rates(
+    engine, gp_name: str, before_date: pd.Timestamp
+) -> dict:
+    """Observed neutralisation and DNF rates at this circuit from PRIOR races only.
+
+    "Safety car" here means any neutralisation: a real safety car (status 4) or
+    a virtual one (status 6), matching how the hand-set ``sc_probability``
+    priors are used. DNFs exclude "Finished", lapped classifications, "Did not
+    start" and "Disqualified" (a disqualified car finished the race; it is not
+    a reliability retirement).
+
+    Point-in-time: only races strictly before ``before_date``, so training rows
+    never see their own race (no leakage). Races whose track status / results
+    have not been ingested yet are excluded from the denominator rather than
+    counted as "no safety car".
+
+    Returns {} when nothing is available; callers then keep the hand-set prior.
+    """
+    params = {"gp": gp_name, "before": before_date.to_pydatetime()}
+    with engine.connect() as conn:
+        sc = conn.execute(
+            text(
+                """
+                SELECT COUNT(DISTINCT s.session_key) AS races,
+                       COUNT(DISTINCT s.session_key)
+                           FILTER (WHERE t.status_code IN ('4', '6')) AS sc_races
+                FROM sessions s
+                JOIN track_status_periods t ON t.session_key = s.session_key
+                WHERE s.session_type = 'R' AND s.gp_name = :gp
+                  AND s.date_start < :before
+                """
+            ),
+            params,
+        ).one()
+        dnf = conn.execute(
+            text(
+                """
+                SELECT COUNT(*) AS entries,
+                       COUNT(*) FILTER (
+                           WHERE NOT (r.status ILIKE 'Finished'
+                                      OR r.status ILIKE 'Lapped'
+                                      OR r.status LIKE '+%'
+                                      OR r.status ILIKE 'Disqualified')
+                       ) AS dnfs
+                FROM session_results r
+                JOIN sessions s ON s.session_key = r.session_key
+                WHERE s.session_type = 'R' AND s.gp_name = :gp
+                  AND s.date_start < :before AND r.status IS NOT NULL
+                  AND r.status NOT ILIKE 'Did not start'  -- not a race reliability event
+                """
+            ),
+            params,
+        ).one()
+    out: dict = {"_sc_races": int(sc.races), "_dnf_entries": int(dnf.entries)}
+    if sc.races:
+        out["sc_probability"] = (int(sc.sc_races), int(sc.races))
+    if dnf.entries:
+        out["dnf_rate_circuit"] = (int(dnf.dnfs), int(dnf.entries))
+    return out
+
+
+def compute_circuit_priors(
+    gp_name: str, engine=None, before_date: pd.Timestamp | None = None
+) -> dict:
+    """Circuit context features.
+
+    Starts from the hand-set priors. When ``engine`` and ``before_date`` are
+    given, ``sc_probability`` and ``dnf_rate_circuit`` are updated with the
+    circuit's observed history (shrunk toward the prior). DNF counts are per
+    driver entry, so they use ``m * 20`` pseudo-entries to weigh a prior race
+    like a full grid.
+    """
     priors = {**DEFAULT_CIRCUIT_PRIORS, **CIRCUIT_PRIORS.get(gp_name, {})}
-    return {k: float(v) for k, v in priors.items()}
+    priors = {k: float(v) for k, v in priors.items()}
+    if engine is None or before_date is None:
+        return priors
+    try:
+        obs = compute_empirical_circuit_rates(engine, gp_name, before_date)
+    except Exception as exc:  # tables missing before migration 0026, etc.
+        log.warning("feature.empirical_rates_failed", gp=gp_name, error=str(exc))
+        return priors
+    if "sc_probability" in obs:
+        k, n = obs["sc_probability"]
+        priors["sc_probability"] = round(_shrink(k, n, priors["sc_probability"]), 4)
+    if "dnf_rate_circuit" in obs:
+        k, n = obs["dnf_rate_circuit"]
+        priors["dnf_rate_circuit"] = round(
+            _shrink(k, n, priors["dnf_rate_circuit"], m=PRIOR_STRENGTH_RACES * 20), 4
+        )
+    return priors
 
 
 def compute_weekend_inputs_used(engine, gp_name: str, year: int) -> dict:
@@ -712,8 +817,9 @@ def compute_weekend_inputs_used(engine, gp_name: str, year: int) -> dict:
         "Q": "qualifying",
     }
     with engine.connect() as conn:
-        rows = conn.execute(
-            text("""
+        rows = (
+            conn.execute(
+                text("""
             SELECT
                 s.session_type,
                 s.session_key,
@@ -727,11 +833,18 @@ def compute_weekend_inputs_used(engine, gp_name: str, year: int) -> dict:
             GROUP BY s.session_type, s.session_key
             ORDER BY MAX(s.date_start) ASC NULLS LAST
         """),
-            {"gp_name": gp_name, "year": year},
-        ).mappings().all()
+                {"gp_name": gp_name, "year": year},
+            )
+            .mappings()
+            .all()
+        )
 
     status = {
-        "practice_long_run": {"available": False, "session_type": "FP1", "lap_count": 0},
+        "practice_long_run": {
+            "available": False,
+            "session_type": "FP1",
+            "lap_count": 0,
+        },
         "sprint_qualifying": {"available": False, "session_type": "SQ", "lap_count": 0},
         "sprint_race": {"available": False, "session_type": "S", "lap_count": 0},
         "qualifying": {"available": False, "session_type": "Q", "lap_count": 0},
@@ -824,7 +937,9 @@ def build_feature_matrix() -> pd.DataFrame:
 
     df = pd.DataFrame(all_rows)
     if df.empty:
-        df = pd.DataFrame(columns=FEATURE_COLS + [TARGET_COL, "abbreviation", "year", "driver_number"])
+        df = pd.DataFrame(
+            columns=FEATURE_COLS + [TARGET_COL, "abbreviation", "year", "driver_number"]
+        )
     log.info("feature.matrix_built", shape=df.shape, features=FEATURE_COLS)
     return df
 
@@ -928,8 +1043,14 @@ def _build_weekend_features(
     for sec in ["s1_ms", "s2_ms", "s3_ms"]:
         q[f"{sec}_rank"] = q[sec].rank(method="min", na_option="bottom").astype(int)
         q[f"{sec}_gap"] = (q[sec] - q[sec].min()).fillna(9999)
-    q["speed_st_rank"] = q["speed_st"].rank(method="min", ascending=False, na_option="bottom").astype(int)
-    fastest_speed_st = float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    q["speed_st_rank"] = (
+        q["speed_st"]
+        .rank(method="min", ascending=False, na_option="bottom")
+        .astype(int)
+    )
+    fastest_speed_st = (
+        float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    )
 
     # Circuit type flags
     is_street = int(gp_name in STREET_CIRCUITS)
@@ -937,6 +1058,9 @@ def _build_weekend_features(
     is_high_df = int(gp_name in HIGH_DF_CIRCUITS)
 
     rows = []
+    # Computed once per weekend (not per driver): one pair of cheap queries.
+    circuit_priors = compute_circuit_priors(gp_name, engine, date_start)
+
     for _, r in q.iterrows():
         driver_number = int(r["driver_number"])
         finish = finish_map.get(driver_number)
@@ -961,7 +1085,6 @@ def _build_weekend_features(
 
         fp1_signal = compute_fp1_long_run_signal(engine, team_name, gp_name, year)
         sprint_signal = compute_sprint_signal(engine, driver_number, gp_name, year)
-        circuit_priors = compute_circuit_priors(gp_name)
 
         # Feature: sector consistency (derived from existing sector features)
         # WHY: A driver P3 who is P1 in S1, P6 in S3 has a clear weakness.
@@ -1096,14 +1219,23 @@ def build_inference_features(quali_session_key: int) -> pd.DataFrame:
     for sec in ["s1_ms", "s2_ms", "s3_ms"]:
         q[f"{sec}_rank"] = q[sec].rank(method="min", na_option="bottom").astype(int)
         q[f"{sec}_gap"] = (q[sec] - q[sec].min()).fillna(9999)
-    q["speed_st_rank"] = q["speed_st"].rank(method="min", ascending=False, na_option="bottom").astype(int)
-    fastest_speed_st = float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    q["speed_st_rank"] = (
+        q["speed_st"]
+        .rank(method="min", ascending=False, na_option="bottom")
+        .astype(int)
+    )
+    fastest_speed_st = (
+        float(q["speed_st"].max()) if q["speed_st"].notna().any() else 0.0
+    )
 
     is_street = int(gp_name in STREET_CIRCUITS)
     is_power = int(gp_name in POWER_CIRCUITS)
     is_high_df = int(gp_name in HIGH_DF_CIRCUITS)
 
     rows = []
+    # Computed once per weekend (not per driver): one pair of cheap queries.
+    circuit_priors = compute_circuit_priors(gp_name, engine, date_start)
+
     for _, r in q.iterrows():
         driver_number = int(r["driver_number"])
         team_name = r["team_name"] or "Unknown"
@@ -1115,7 +1247,6 @@ def build_inference_features(quali_session_key: int) -> pd.DataFrame:
         fp2_strategy = compute_fp2_strategy(fp2_data, team_name, gp_name, year)
         fp1_signal = compute_fp1_long_run_signal(engine, team_name, gp_name, year)
         sprint_signal = compute_sprint_signal(engine, driver_number, gp_name, year)
-        circuit_priors = compute_circuit_priors(gp_name)
 
         sector_ranks = [
             int(r["s1_ms_rank"]),
