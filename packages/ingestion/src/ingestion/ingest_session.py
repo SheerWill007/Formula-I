@@ -251,6 +251,10 @@ def ingest_session(
         )
         return session_key
     except Exception as exc:
+        # FastF1's client-side request budget (e.g. "500 calls/h"). Let the
+        # caller decide whether to wait for the window to reset.
+        if type(exc).__name__ == "RateLimitExceededError":
+            raise
         is_data_not_loaded = (
             type(exc).__name__ == "DataNotLoadedError"
             or "DataNotLoadedError" in str(type(exc))

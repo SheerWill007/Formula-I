@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import time
 from datetime import datetime, timezone
 
 import structlog
@@ -34,6 +35,41 @@ log = structlog.get_logger()
 # Only start ingesting a session this many hours after it started. Keeps us from
 # grabbing a session that is still running (or whose data is still settling).
 COMPLETION_BUFFER_HOURS = 6
+
+# FastF1 enforces a per-hour request budget. When it is exhausted, wait for the
+# window to reset and retry instead of failing every remaining session.
+RATE_LIMIT_SLEEP_SECONDS = int(os.environ.get("BACKFILL_RATE_LIMIT_SLEEP_SECONDS", "3660"))
+RATE_LIMIT_MAX_WAITS = int(os.environ.get("BACKFILL_RATE_LIMIT_MAX_WAITS", "4"))
+
+
+def is_rate_limited(exc: BaseException) -> bool:
+    return type(exc).__name__ == "RateLimitExceededError" or "calls/h" in str(exc)
+
+
+def _ingest_with_rate_limit_wait(year, gp_short, session_name, skip_telemetry, waits_used, sleep=time.sleep):
+    """Ingest one session, sleeping through FastF1 rate-limit windows.
+
+    Returns (session_key, waits_used). Re-raises once the wait budget is spent.
+    """
+    while True:
+        try:
+            return (
+                ingest_session(year, gp_short, session_name, skip_telemetry=skip_telemetry),
+                waits_used,
+            )
+        except Exception as e:
+            if not is_rate_limited(e) or waits_used >= RATE_LIMIT_MAX_WAITS:
+                raise
+            waits_used += 1
+            log.warning(
+                "backfill.rate_limited",
+                year=year,
+                gp=gp_short,
+                session=session_name,
+                wait_seconds=RATE_LIMIT_SLEEP_SECONDS,
+                wait_number=waits_used,
+            )
+            sleep(RATE_LIMIT_SLEEP_SECONDS)
 
 
 def _event_sessions(event) -> list[tuple[str, object]]:
@@ -86,8 +122,12 @@ def run_year(
         new_sessions = 0
         failed = 0
         skipped = 0
+        rate_limit_waits = 0
+        budget_spent = False
 
         for _, event in schedule.iterrows():
+            if budget_spent:
+                break
             if str(event.get("EventFormat", "")).lower() == "testing":
                 continue
             gp_name = str(event["EventName"])
@@ -130,10 +170,19 @@ def run_year(
                     continue
 
                 try:
-                    session_key = ingest_session(
-                        year, gp_short, session_name, skip_telemetry=skip_telemetry
+                    session_key, rate_limit_waits = _ingest_with_rate_limit_wait(
+                        year, gp_short, session_name, skip_telemetry, rate_limit_waits
                     )
                 except Exception as e:
+                    if is_rate_limited(e):
+                        log.error(
+                            "backfill.rate_limit_budget_spent",
+                            year=year,
+                            reason="re-run the workflow later; finished sessions are skipped",
+                        )
+                        failed += 1
+                        budget_spent = True
+                        break
                     if (
                         type(e).__name__ == "DataNotLoadedError"
                         or "DataNotLoadedError" in str(type(e))
