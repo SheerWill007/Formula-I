@@ -33,6 +33,10 @@ def verify_session_token(token: str) -> str:
         signing_key = _jwks_client().get_signing_key_from_jwt(token)
     except jwt.PyJWKClientError as exc:
         raise ClerkAuthError(f"cannot resolve signing key: {exc}") from exc
+    except jwt.PyJWTError as exc:
+        # Malformed tokens fail while reading the header (DecodeError); treat
+        # them as a 401, not an unhandled 500.
+        raise ClerkAuthError(f"invalid token: {exc}") from exc
     try:
         payload = jwt.decode(
             token,

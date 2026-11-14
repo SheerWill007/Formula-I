@@ -45,24 +45,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-packages
 
-      - name: Init database schema
+      - name: Apply database migrations
         run: |
-          uv run python -c "
-          from sqlalchemy import create_engine, text
-          import os, time
-          url = os.environ['DATABASE_URL']
-          # Wait for TimescaleDB to be ready
-          for i in range(10):
-              try:
-                  engine = create_engine(url)
-                  with engine.connect() as conn:
-                      conn.execute(text('SELECT 1'))
-                  break
-              except Exception:
-                  time.sleep(2)
-          "
-          # Run init SQL
-          PGPASSWORD=pitwall psql -h localhost -U pitwall -d pitwall -f infra/postgres/init.sql
+          # Wait for TimescaleDB, then build the schema exactly as production does.
+          for i in $(seq 1 15); do pg_isready -h localhost -U pitwall && break; sleep 2; done
+          uv run alembic -c apps/backend/alembic.ini upgrade head
 
       - name: Run backend tests
         run: uv run pytest apps/backend/tests/ -v --tb=short

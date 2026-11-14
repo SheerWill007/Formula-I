@@ -95,3 +95,29 @@ def test_cors_blocks_unknown_origin(app):
         },
     )
     assert "Access-Control-Allow-Origin" not in resp.headers
+
+
+
+def test_malformed_token_raises_auth_error_not_500(monkeypatch):
+    """A garbage bearer token must become ClerkAuthError (-> 401), not a 500.
+
+    conftest stubs ``verify_session_token`` for every other test, so load a
+    fresh copy of the module to exercise the real implementation.
+    """
+    import importlib.util
+
+    import jwt
+    import pytest
+    from backend import auth as stubbed
+
+    spec = importlib.util.spec_from_file_location("auth_real", stubbed.__file__)
+    real = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(real)
+
+    class FakeClient:
+        def get_signing_key_from_jwt(self, token):
+            raise jwt.DecodeError("Not enough segments")
+
+    monkeypatch.setattr(real, "_jwks_client", lambda: FakeClient())
+    with pytest.raises(real.ClerkAuthError, match="invalid token"):
+        real.verify_session_token("not-a-jwt")
